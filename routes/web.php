@@ -19,6 +19,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 require __DIR__.'/settings.php';
 
+
 // ─── AUTH ADMIN ──────────────────────────────────────────
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('login',  [AdminAuthController::class, 'showLogin'])
