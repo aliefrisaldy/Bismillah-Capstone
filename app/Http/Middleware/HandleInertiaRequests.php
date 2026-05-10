@@ -35,18 +35,35 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $isAdminRoute = str_starts_with($request->path(), 'admin')
+            || $request->path() === 'dashboard';
+
+        if ($isAdminRoute) {
+            $admin = $request->user('admin');
+            $authUser = $admin ? [
+                'id' => $admin->id_admin,
+                'name' => $admin->nama,
+                'email' => $admin->email,
+                'jabatan' => $admin->jabatan,
+            ] : null;
+        } else {
+            $user = $request->user('web');
+            $authUser = $user ? [
+                'id' => $user->id_user,
+                'name' => $user->nama,
+                'email' => $user->email,
+                'no_telpon' => $user->no_telpon,
+            ] : null;
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user() ? [
-                    'id' => $request->user()->id_user,
-                    'name' => $request->user()->nama,  // ← map nama ke name
-                    'email' => $request->user()->email,
-                    'no_telpon' => $request->user()->no_telpon,
-                ] : null,
+                'user' => $authUser,
             ],
-            'sidebarOpen' => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'sidebarOpen' => !$request->hasCookie('sidebar_state')
+                || $request->cookie('sidebar_state') === 'true',
         ];
     }
 }

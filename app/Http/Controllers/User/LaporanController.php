@@ -39,18 +39,23 @@ class LaporanController extends Controller
     {
         $request->validate([
             'deskripsi' => 'required|string',
-            'foto'      => 'required|image|max:5120',
+            'foto'      => 'required|array|min:1',
+            'foto.*'    => 'image|max:5120',
             'latitude'  => 'required|numeric',
             'longitude' => 'required|numeric',
             'alamat'    => 'nullable|string',
         ]);
 
-        $fotoPath = $request->file('foto')->store('laporan', 'public');
+        $fotoPaths = collect($request->file('foto'))
+            ->filter()
+            ->map(fn($f) => $f->store('laporan', 'public'))
+            ->values()
+            ->all();
 
         Laporan::create([
             'id_user'   => Auth::id(),
             'deskripsi' => $request->deskripsi,
-            'foto'      => $fotoPath,
+            'foto'      => $fotoPaths,
             'latitude'  => $request->latitude,
             'longitude' => $request->longitude,
             'alamat'    => $request->alamat,

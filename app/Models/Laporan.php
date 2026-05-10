@@ -29,6 +29,7 @@ class Laporan extends Model
             'tanggal_diperbarui' => 'datetime',
             'latitude'           => 'decimal:8',
             'longitude'          => 'decimal:8',
+            'foto'               => 'array',
         ];
     }
 

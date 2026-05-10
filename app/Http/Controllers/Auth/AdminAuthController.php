@@ -26,7 +26,7 @@ class AdminAuthController extends Controller
             $request->boolean('remember')
         )) {
             $request->session()->regenerate();
-            return redirect()->route('admin.dashboard');
+            return redirect('/admin/dashboard');
         }
 
         return back()->withErrors([
@@ -39,6 +39,6 @@ class AdminAuthController extends Controller
         Auth::guard('admin')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect()->route('admin.login');
+        return redirect('/admin/login');
     }
 }

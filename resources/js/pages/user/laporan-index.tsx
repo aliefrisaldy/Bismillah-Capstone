@@ -1,9 +1,24 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, HelpCircle, Info, Phone, MapPin, ClipboardList, Timer, BadgeCheck } from 'lucide-react';
+import {
+    PlusCircle,
+    HelpCircle,
+    Info,
+    Phone,
+    MapPin,
+    ClipboardList,
+    Timer,
+    BadgeCheck,
+    ImageOff,
+    FilePlus2,
+} from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useInitials } from '@/hooks/use-initials';
 import { formatDistanceToNow } from 'date-fns';
@@ -80,6 +95,7 @@ const statusConfig = {
 export default function LaporanIndex({ laporan }: Props) {
     const { auth } = usePage().props as any;
     const getInitials = useInitials();
+    const [menuOpen, setMenuOpen] = useState(false);
 
     const totalLaporan = laporan.length;
     const totalProses = laporan.filter((l) =>
@@ -98,28 +114,65 @@ export default function LaporanIndex({ laporan }: Props) {
                         Civic Ecology Palu
                     </Link>
                     <div className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
-                        <Link href="/" className="transition-colors duration-200 hover:text-foreground">Home</Link>
-                        <Link href="/user/laporan" className="relative font-semibold text-foreground after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-full after:bg-foreground">
+                        <Link href="/" className="transition-colors duration-200 hover:text-foreground">
+                            Home
+                        </Link>
+                        <Link
+                            href="/user/laporan"
+                            className="relative font-semibold text-foreground after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-full after:bg-foreground"
+                        >
                             Laporan Saya
                         </Link>
-                        <Link href="/user/laporan/buat" className="transition-colors duration-200 hover:text-foreground">Buat Laporan</Link>
+                        <Link href="/user/laporan/buat" className="transition-colors duration-200 hover:text-foreground">
+                            Buat Laporan
+                        </Link>
                     </div>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="size-10 overflow-hidden rounded-full p-0 ring-2 ring-border transition-all duration-200 hover:ring-foreground/30">
-                                <Avatar className="size-full">
-                                    <AvatarImage src={auth?.user?.avatar} alt={auth?.user?.name} />
-                                    <AvatarFallback className="bg-emerald-800 text-white">
-                                        {getInitials(auth?.user?.name ?? '')}
-                                    </AvatarFallback>
-                                </Avatar>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-56" align="end">
-                            {auth?.user && <UserMenuContent user={auth.user} />}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex items-center gap-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    className="size-10 overflow-hidden rounded-full p-0 ring-2 ring-border transition-all duration-200 hover:ring-foreground/30"
+                                >
+                                    <Avatar className="size-full">
+                                        <AvatarImage src={auth?.user?.avatar} alt={auth?.user?.name} />
+                                        <AvatarFallback className="bg-emerald-800 text-white">
+                                            {getInitials(auth?.user?.name ?? '')}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-56" align="end">
+                                {auth?.user && <UserMenuContent user={auth.user} />}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        {/* Mobile menu button */}
+                        <button
+                            type="button"
+                            className="inline-flex size-10 items-center justify-center rounded-full border border-border/60 bg-background/60 text-foreground backdrop-blur transition-colors hover:bg-accent md:hidden"
+                            onClick={() => setMenuOpen(!menuOpen)}
+                            aria-label="Toggle menu"
+                        >
+                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                {menuOpen ? (
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                ) : (
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                )}
+                            </svg>
+                        </button>
+                    </div>
                 </nav>
+
+                {/* Mobile menu (landing page style) */}
+                {menuOpen && (
+                    <div className="border-t border-border/50 px-6 py-4 md:hidden flex flex-col gap-4">
+                        <Link href="/" className="text-sm text-muted-foreground">Home</Link>
+                        <Link href="/user/laporan" className="text-sm font-semibold text-foreground">Laporan Saya</Link>
+                        <Link href="/user/laporan/buat" className="text-sm text-muted-foreground">Buat Laporan</Link>
+                    </div>
+                )}
             </header>
 
             <main className="mx-auto mt-8 max-w-6xl px-6 md:px-12 lg:mt-12">
@@ -229,17 +282,33 @@ export default function LaporanIndex({ laporan }: Props) {
 
                         {laporan.length === 0 ? (
                             <FadeIn delay={200}>
-                                <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card py-20 text-center shadow-sm">
-                                    <p className="mb-4 text-4xl">🗑️</p>
-                                    <p className="text-lg font-bold text-foreground">Belum ada laporan</p>
-                                    <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-                                        Anda belum membuat laporan apapun. Mari mulai berkontribusi dengan melaporkan titik sampah ilegal.
+                                <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-8 text-center shadow-sm sm:p-10">
+                                    <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-emerald-500/10 blur-3xl" />
+                                    <div className="pointer-events-none absolute -left-10 -bottom-10 h-40 w-40 rounded-full bg-orange-500/10 blur-3xl" />
+
+                                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900/40">
+                                        <ClipboardList className="h-7 w-7" />
+                                    </div>
+                                    <p className="mt-5 text-xl font-extrabold tracking-tight text-foreground">
+                                        Belum ada laporan
                                     </p>
-                                    <Link href="/user/laporan/buat" className="mt-6">
-                                        <Button variant="outline" className="rounded-lg border-border text-foreground hover:bg-accent hover:text-accent-foreground">
-                                            Buat Laporan Pertama
-                                        </Button>
-                                    </Link>
+                                    <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+                                        Kamu belum membuat laporan apapun. Mulai berkontribusi dengan melaporkan
+                                        titik pembuangan sampah ilegal di sekitarmu.
+                                    </p>
+
+                                    <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                                        <Link href="/user/laporan/buat">
+                                            <Button className="w-full rounded-xl bg-emerald-800 px-6 text-white hover:bg-emerald-900 sm:w-auto">
+                                                <FilePlus2 className="mr-2 h-5 w-5" />
+                                                Buat Laporan Pertama
+                                            </Button>
+                                        </Link>
+                                    </div>
+
+                                    <p className="mt-5 text-[11px] text-muted-foreground">
+                                        Tips: foto yang jelas + lokasi GPS akan mempercepat verifikasi.
+                                    </p>
                                 </div>
                             </FadeIn>
                         ) : (
@@ -248,16 +317,25 @@ export default function LaporanIndex({ laporan }: Props) {
                                     <FadeIn key={item.id_laporan} delay={index * 80} direction="up">
                                         <Link href={`/user/laporan/${item.id_laporan}`} className="group block">
                                             <div className="flex flex-col gap-5 overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:border-emerald-200 hover:shadow-md sm:flex-row dark:hover:border-emerald-800">
-                                                {item.foto ? (
+                                                {Array.isArray(item.foto) ? (
+                                                    <img
+                                                        src={`/storage/${item.foto[0]}`}
+                                                        alt="Foto laporan"
+                                                        className="h-40 w-full flex-shrink-0 rounded-xl border border-border object-cover sm:h-32 sm:w-40"
+                                                    />
+                                                ) : item.foto ? (
                                                     <img
                                                         src={`/storage/${item.foto}`}
                                                         alt="Foto laporan"
                                                         className="h-40 w-full flex-shrink-0 rounded-xl border border-border object-cover sm:h-32 sm:w-40"
                                                     />
                                                 ) : (
-                                                    <div className="flex h-40 w-full flex-shrink-0 items-center justify-center rounded-xl border border-border bg-muted text-3xl sm:h-32 sm:w-40">
-                                                        🗑️
-                                                    </div>
+                                                    <div className="flex h-40 w-full flex-shrink-0 flex-col items-center justify-center gap-2 rounded-xl border border-border bg-muted/40 text-muted-foreground sm:h-32 sm:w-40">
+                                                        <ImageOff className="h-7 w-7" />
+                                                        <span className="text-xs font-semibold">
+                                                            Tanpa foto
+                                                        </span>
+                                                        </div>
                                                 )}
                                                 <div className="flex min-w-0 flex-1 flex-col py-1">
                                                     <div className="mb-2 flex items-center gap-3">
