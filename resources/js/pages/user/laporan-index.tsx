@@ -1,6 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react';
+import { useEffect, useRef, useState, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, HelpCircle, Info, Phone, MapPin } from 'lucide-react';
+import { PlusCircle, HelpCircle, Info, Phone, MapPin, ClipboardList, Timer, BadgeCheck } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserMenuContent } from '@/components/user-menu-content';
@@ -8,6 +9,54 @@ import { useInitials } from '@/hooks/use-initials';
 import { formatDistanceToNow } from 'date-fns';
 import { id } from 'date-fns/locale';
 
+// ── FadeIn Component (sama dengan Welcome) ──────────────
+const FadeIn = ({ children, delay = 0, direction = 'up', className = '' }: {
+    children: ReactNode;
+    delay?: number;
+    direction?: 'up' | 'down' | 'left' | 'right' | 'none';
+    className?: string;
+}) => {
+    const [isVisible, setIsVisible] = useState(false);
+    const domRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    setIsVisible(true);
+                    if (domRef.current) observer.unobserve(domRef.current);
+                }
+            });
+        }, { threshold: 0.1 });
+        const currentRef = domRef.current;
+        if (currentRef) observer.observe(currentRef);
+        return () => { if (currentRef) observer.unobserve(currentRef); };
+    }, []);
+
+    const directionClasses = {
+        up: 'translate-y-10',
+        down: '-translate-y-10',
+        left: 'translate-x-10',
+        right: '-translate-x-10',
+        none: 'scale-95',
+    };
+
+    return (
+        <div
+            ref={domRef}
+            className={`transition-all duration-700 ease-out ${className} ${
+                isVisible
+                    ? 'opacity-100 translate-y-0 translate-x-0 scale-100'
+                    : `opacity-0 ${directionClasses[direction]}`
+            }`}
+            style={{ transitionDelay: `${delay}ms` }}
+        >
+            {children}
+        </div>
+    );
+};
+
+// ── Types ────────────────────────────────────────────────
 type Laporan = {
     id_laporan: number;
     deskripsi: string;
@@ -18,45 +67,49 @@ type Laporan = {
     tanggal_diperbarui: string;
 };
 
-type Props = {
-    laporan: Laporan[];
-};
+type Props = { laporan: Laporan[] };
 
 const statusConfig = {
-    menunggu:    { label: 'MENUNGGU',    color: 'bg-amber-100 text-amber-700' },
-    diverifikasi: { label: 'DIVERIFIKASI', color: 'bg-blue-100 text-blue-700' },
-    diproses:    { label: 'DIPROSES',    color: 'bg-orange-100 text-orange-700' },
-    selesai:     { label: 'SELESAI',     color: 'bg-green-100 text-green-700' },
-    ditolak:     { label: 'DITOLAK',     color: 'bg-red-100 text-red-700' },
+    menunggu:     { label: 'MENUNGGU',     color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' },
+    diverifikasi: { label: 'DIVERIFIKASI', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
+    diproses:     { label: 'DIPROSES',     color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' },
+    selesai:      { label: 'SELESAI',      color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
+    ditolak:      { label: 'DITOLAK',      color: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
 };
 
 export default function LaporanIndex({ laporan }: Props) {
     const { auth } = usePage().props as any;
     const getInitials = useInitials();
 
+    const totalLaporan = laporan.length;
+    const totalProses = laporan.filter((l) =>
+        l.status === 'menunggu' || l.status === 'diverifikasi' || l.status === 'diproses'
+    ).length;
+    const totalSelesai = laporan.filter((l) => l.status === 'selesai').length;
+
     return (
-        <div className="min-h-screen bg-[#F8FAFC] font-sans selection:bg-green-500/30 pb-20">
+        <div className="min-h-screen bg-background pb-20 font-sans selection:bg-emerald-500/30">
             <Head title="Sistem Pelaporan" />
 
-            {/* Custom Navbar matching the design */}
-            <nav className="flex items-center justify-between px-6 py-6 md:px-12 lg:px-24">
-                <Link href="/" className="text-[#0B3B24] font-bold text-xl tracking-tight">
-                    Civic Ecology Palu
-                </Link>
-                
-                <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-500">
-                    <Link href="/" className="hover:text-[#0B3B24] transition-colors">Home</Link>
-                    <Link href="/user/laporan" className="text-[#0B3B24] border-b-2 border-[#0B3B24] pb-1 font-semibold">Laporan Saya</Link>
-                    <Link href="/user/laporan/buat" className="hover:text-[#0B3B24] transition-colors">Buat Laporan</Link>
-                </div>
-                
-                <div className="flex items-center">
+            {/* Navbar */}
+            <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+                <nav className="flex items-center justify-between px-6 py-4 md:px-12 lg:px-24">
+                    <Link href="/" className="text-xl font-bold tracking-tight text-foreground">
+                        Civic Ecology Palu
+                    </Link>
+                    <div className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
+                        <Link href="/" className="transition-colors duration-200 hover:text-foreground">Home</Link>
+                        <Link href="/user/laporan" className="relative font-semibold text-foreground after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-full after:bg-foreground">
+                            Laporan Saya
+                        </Link>
+                        <Link href="/user/laporan/buat" className="transition-colors duration-200 hover:text-foreground">Buat Laporan</Link>
+                    </div>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="size-10 rounded-full p-0 overflow-hidden ring-2 ring-[#0B3B24]/10 hover:ring-[#0B3B24]/30 transition-all">
+                            <Button variant="ghost" className="size-10 overflow-hidden rounded-full p-0 ring-2 ring-border transition-all duration-200 hover:ring-foreground/30">
                                 <Avatar className="size-full">
                                     <AvatarImage src={auth?.user?.avatar} alt={auth?.user?.name} />
-                                    <AvatarFallback className="bg-[#0B3B24] text-white">
+                                    <AvatarFallback className="bg-emerald-800 text-white">
                                         {getInitials(auth?.user?.name ?? '')}
                                     </AvatarFallback>
                                 </Avatar>
@@ -66,157 +119,216 @@ export default function LaporanIndex({ laporan }: Props) {
                             {auth?.user && <UserMenuContent user={auth.user} />}
                         </DropdownMenuContent>
                     </DropdownMenu>
-                </div>
-            </nav>
+                </nav>
+            </header>
 
-            <main className="mx-auto max-w-6xl px-6 md:px-12 mt-8 lg:mt-12">
+            <main className="mx-auto mt-8 max-w-6xl px-6 md:px-12 lg:mt-12">
+
                 {/* Hero Section */}
-                <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-16">
+                <div className="mb-16 flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
                     <div className="max-w-2xl">
-                        <h1 className="text-4xl md:text-5xl font-extrabold text-[#0B3B24] leading-tight tracking-tight">
-                            Sistem Pelaporan Tempat <br className="hidden md:block" />
-                            Pembuangan Sampah Ilegal
-                        </h1>
-                        <p className="mt-4 text-[15px] text-gray-600 leading-relaxed max-w-xl">
-                            Selamat datang kembali, Sahabat Ekologi. Mari bersama menjaga keasrian Kota Palu
-                            dengan melaporkan titik pembuangan sampah tidak resmi di lingkungan Anda.
-                        </p>
+                        <FadeIn delay={100}>
+                            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50/80 px-4 py-1.5 dark:border-emerald-800 dark:bg-emerald-900/30">
+                                <span className="relative flex h-2 w-2">
+                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                                </span>
+                                <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                                    Sistem Pelaporan Aktif
+                                </span>
+                            </div>
+                        </FadeIn>
+                        <FadeIn delay={200}>
+                            <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-foreground md:text-5xl">
+                                Sistem Pelaporan Tempat{' '}
+                                <br className="hidden md:block" />
+                                Pembuangan Sampah Ilegal
+                            </h1>
+                        </FadeIn>
+                        <FadeIn delay={300}>
+                            <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
+                                Selamat datang kembali, Sahabat Ekologi. Mari bersama menjaga keasrian Kota Palu
+                                dengan melaporkan titik pembuangan sampah tidak resmi di lingkungan Anda.
+                            </p>
+                        </FadeIn>
                     </div>
-                    <Link href="/user/laporan/buat" className="shrink-0">
-                        <Button className="bg-[#1A4D2E] hover:bg-[#133922] text-white rounded-lg px-6 py-6 font-semibold shadow-lg shadow-green-900/20 transition-all hover:-translate-y-1">
-                            <PlusCircle className="mr-2 h-5 w-5" />
-                            Buat Laporan Baru
-                        </Button>
-                    </Link>
+                    <FadeIn delay={400} direction="left" className="shrink-0">
+                        <Link href="/user/laporan/buat">
+                            <Button className="rounded-lg bg-emerald-800 px-6 py-6 font-semibold text-white shadow-lg shadow-emerald-900/20 transition-all hover:-translate-y-1 hover:bg-emerald-900">
+                                <PlusCircle className="mr-2 h-5 w-5" />
+                                Buat Laporan Baru
+                            </Button>
+                        </Link>
+                    </FadeIn>
                 </div>
 
-                {/* Main Content Area */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    
-                    {/* Left Column: Laporan Terbaru */}
-                    <div className="lg:col-span-2">
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-bold text-[#0B3B24]">Laporan Terbaru</h2>
-                            <Link href="/user/laporan" className="text-sm font-semibold text-[#0B3B24] hover:underline flex items-center">
-                                Lihat Semua <span className="ml-1">→</span>
-                            </Link>
+                {/* Summary Cards */}
+                <div className="mb-12 grid grid-cols-1 gap-5 md:grid-cols-3">
+                    <FadeIn delay={120}>
+                        <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-800 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900/40">
+                                    <ClipboardList className="h-6 w-6" />
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Aktivitas</p>
+                                    <p className="mt-2 text-4xl font-extrabold tracking-tight text-foreground">{totalLaporan}</p>
+                                    <p className="mt-1 text-xs text-muted-foreground">Total Laporan Saya</p>
+                                </div>
+                            </div>
+                            <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-emerald-500/10 blur-2xl transition-opacity group-hover:opacity-80" />
                         </div>
+                    </FadeIn>
 
-                        {laporan.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white py-20 text-center shadow-sm">
-                                <p className="text-4xl mb-4">🗑️</p>
-                                <p className="text-lg font-bold text-[#0B3B24]">Belum ada laporan</p>
-                                <p className="mt-2 text-sm text-gray-500 max-w-sm">
-                                    Anda belum membuat laporan apapun. Mari mulai berkontribusi dengan melaporkan titik sampah ilegal.
-                                </p>
-                                <Link href="/user/laporan/buat" className="mt-6">
-                                    <Button variant="outline" className="border-[#0B3B24] text-[#0B3B24] hover:bg-[#0B3B24] hover:text-white rounded-lg">
-                                        Buat Laporan Pertama
-                                    </Button>
+                    <FadeIn delay={200}>
+                        <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-800 ring-1 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900/40">
+                                    <Timer className="h-6 w-6" />
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Proses</p>
+                                    <p className="mt-2 text-4xl font-extrabold tracking-tight text-foreground">{totalProses}</p>
+                                    <p className="mt-1 text-xs text-muted-foreground">Dalam Proses</p>
+                                </div>
+                            </div>
+                            <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-amber-500/10 blur-2xl transition-opacity group-hover:opacity-80" />
+                        </div>
+                    </FadeIn>
+
+                    <FadeIn delay={280}>
+                        <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-50 text-green-800 ring-1 ring-green-100 dark:bg-green-950/40 dark:text-green-300 dark:ring-green-900/40">
+                                    <BadgeCheck className="h-6 w-6" />
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Berhasil</p>
+                                    <p className="mt-2 text-4xl font-extrabold tracking-tight text-foreground">{totalSelesai}</p>
+                                    <p className="mt-1 text-xs text-muted-foreground">Selesai</p>
+                                </div>
+                            </div>
+                            <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-green-500/10 blur-2xl transition-opacity group-hover:opacity-80" />
+                        </div>
+                    </FadeIn>
+                </div>
+
+                {/* Main Content */}
+                <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+
+                    {/* Left: Laporan */}
+                    <div className="lg:col-span-2">
+                        <FadeIn delay={100}>
+                            <div className="mb-6 flex items-center justify-between">
+                                <h2 className="text-xl font-bold text-foreground">Laporan Terbaru</h2>
+                                <Link href="/user/laporan" className="flex items-center text-sm font-semibold text-foreground hover:underline">
+                                    Lihat Semua <span className="ml-1">→</span>
                                 </Link>
                             </div>
+                        </FadeIn>
+
+                        {laporan.length === 0 ? (
+                            <FadeIn delay={200}>
+                                <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card py-20 text-center shadow-sm">
+                                    <p className="mb-4 text-4xl">🗑️</p>
+                                    <p className="text-lg font-bold text-foreground">Belum ada laporan</p>
+                                    <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+                                        Anda belum membuat laporan apapun. Mari mulai berkontribusi dengan melaporkan titik sampah ilegal.
+                                    </p>
+                                    <Link href="/user/laporan/buat" className="mt-6">
+                                        <Button variant="outline" className="rounded-lg border-border text-foreground hover:bg-accent hover:text-accent-foreground">
+                                            Buat Laporan Pertama
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </FadeIn>
                         ) : (
                             <div className="flex flex-col gap-5">
-                                {laporan.map((item) => (
-                                    <Link
-                                        key={item.id_laporan}
-                                        href={`/user/laporan/${item.id_laporan}`}
-                                        className="block group"
-                                    >
-                                        <div className="flex flex-col sm:flex-row gap-5 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all hover:shadow-md hover:border-green-100">
-                                            
-                                            {/* Foto */}
-                                            {item.foto ? (
-                                                <img
-                                                    src={`/storage/${item.foto}`}
-                                                    alt="Foto laporan"
-                                                    className="h-40 sm:h-32 w-full sm:w-40 flex-shrink-0 rounded-xl object-cover border border-gray-100"
-                                                />
-                                            ) : (
-                                                <div className="flex h-40 sm:h-32 w-full sm:w-40 flex-shrink-0 items-center justify-center rounded-xl bg-gray-50 border border-gray-100 text-3xl">
-                                                    🗑️
+                                {laporan.map((item, index) => (
+                                    <FadeIn key={item.id_laporan} delay={index * 80} direction="up">
+                                        <Link href={`/user/laporan/${item.id_laporan}`} className="group block">
+                                            <div className="flex flex-col gap-5 overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:border-emerald-200 hover:shadow-md sm:flex-row dark:hover:border-emerald-800">
+                                                {item.foto ? (
+                                                    <img
+                                                        src={`/storage/${item.foto}`}
+                                                        alt="Foto laporan"
+                                                        className="h-40 w-full flex-shrink-0 rounded-xl border border-border object-cover sm:h-32 sm:w-40"
+                                                    />
+                                                ) : (
+                                                    <div className="flex h-40 w-full flex-shrink-0 items-center justify-center rounded-xl border border-border bg-muted text-3xl sm:h-32 sm:w-40">
+                                                        🗑️
+                                                    </div>
+                                                )}
+                                                <div className="flex min-w-0 flex-1 flex-col py-1">
+                                                    <div className="mb-2 flex items-center gap-3">
+                                                        <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wider ${statusConfig[item.status].color}`}>
+                                                            {statusConfig[item.status].label}
+                                                        </span>
+                                                        <span className="text-xs font-medium text-muted-foreground">
+                                                            {formatDistanceToNow(new Date(item.tanggal_laporan), { addSuffix: true, locale: id })}
+                                                        </span>
+                                                    </div>
+                                                    <h3 className="mb-2 line-clamp-1 text-lg font-bold text-card-foreground transition-colors group-hover:text-emerald-600 dark:group-hover:text-emerald-400">
+                                                        {item.alamat || 'Laporan Titik Sampah'}
+                                                    </h3>
+                                                    <p className="line-clamp-2 overflow-hidden text-sm leading-relaxed break-words text-muted-foreground">
+                                                        {item.deskripsi}
+                                                    </p>
                                                 </div>
-                                            )}
-
-                                            {/* Info */}
-                                            <div className="flex flex-1 flex-col py-1">
-                                                <div className="flex items-center gap-3 mb-2">
-                                                    <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wider ${statusConfig[item.status].color}`}>
-                                                        {statusConfig[item.status].label}
-                                                    </span>
-                                                    <span className="text-xs text-gray-500 font-medium">
-                                                        {formatDistanceToNow(new Date(item.tanggal_laporan), { addSuffix: true, locale: id })}
-                                                    </span>
-                                                </div>
-                                                
-                                                <h3 className="text-lg font-bold text-[#0B3B24] mb-2 line-clamp-1 group-hover:text-green-700 transition-colors">
-                                                    {item.alamat || 'Laporan Titik Sampah'}
-                                                </h3>
-                                                
-                                                <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
-                                                    {item.deskripsi}
-                                                </p>
                                             </div>
-                                        </div>
-                                    </Link>
+                                        </Link>
+                                    </FadeIn>
                                 ))}
                             </div>
                         )}
                     </div>
 
-                    {/* Right Column: Help & Footer Info */}
-                    <div className="lg:col-span-1 space-y-6">
-                        
-                        {/* Butuh Bantuan Card */}
-                        <div className="rounded-2xl bg-[#E6F0FA] p-6 shadow-sm border border-blue-100">
-                            <div className="flex items-center gap-2 mb-5">
-                                <HelpCircle className="h-5 w-5 text-[#1E3A8A]" />
-                                <h3 className="text-lg font-bold text-[#1E3A8A]">Butuh Bantuan?</h3>
+                    {/* Right: Help Card */}
+                    <div className="space-y-6 lg:col-span-1">
+                        <FadeIn delay={200} direction="left">
+                            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6 shadow-sm dark:border-blue-800/30 dark:bg-blue-950/40">
+                                <div className="mb-5 flex items-center gap-2">
+                                    <HelpCircle className="h-5 w-5 text-blue-800 dark:text-blue-300" />
+                                    <h3 className="text-lg font-bold text-blue-800 dark:text-blue-300">Butuh Bantuan?</h3>
+                                </div>
+                                <ul className="space-y-4">
+                                    {[
+                                        { icon: Info,  text: 'Panduan cara melapor yang efektif' },
+                                        { icon: Phone, text: 'Hubungi Hotline Dinas Lingkungan Hidup' },
+                                        { icon: MapPin,text: 'Lihat lokasi TPS Resmi terdekat' },
+                                    ].map(({ icon: Icon, text }) => (
+                                        <li key={text}>
+                                            <Link href="#" className="group flex items-start gap-3 text-sm text-blue-700/80 transition-colors hover:text-blue-800 dark:text-blue-400/80 dark:hover:text-blue-300">
+                                                <Icon className="mt-0.5 h-4 w-4 shrink-0" />
+                                                <span className="group-hover:underline">{text}</span>
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
-                            
-                            <ul className="space-y-4">
-                                <li>
-                                    <Link href="#" className="flex items-start gap-3 text-sm text-[#1E3A8A]/80 hover:text-[#1E3A8A] transition-colors group">
-                                        <Info className="h-4 w-4 mt-0.5 shrink-0" />
-                                        <span className="group-hover:underline">Panduan cara melapor yang efektif</span>
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link href="#" className="flex items-start gap-3 text-sm text-[#1E3A8A]/80 hover:text-[#1E3A8A] transition-colors group">
-                                        <Phone className="h-4 w-4 mt-0.5 shrink-0" />
-                                        <span className="group-hover:underline">Hubungi Hotline Dinas Lingkungan Hidup</span>
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link href="#" className="flex items-start gap-3 text-sm text-[#1E3A8A]/80 hover:text-[#1E3A8A] transition-colors group">
-                                        <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
-                                        <span className="group-hover:underline">Lihat lokasi TPS Resmi terdekat</span>
-                                    </Link>
-                                </li>
-                            </ul>
-                        </div>
-
+                        </FadeIn>
                     </div>
                 </div>
             </main>
-            
+
             {/* Footer */}
-            <footer className="mx-auto max-w-6xl px-6 md:px-12 mt-24 border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                <div>
-                    <h4 className="font-bold text-[#0B3B24] mb-1">Civic Ecology Palu</h4>
-                    <p className="text-xs text-gray-500">
-                        © {new Date().getFullYear()} Pemerintah Kota Palu - Dinas Lingkungan Hidup. Digital Arboretum Initiative.
-                    </p>
-                </div>
-                <div className="flex gap-6 text-sm text-gray-500 font-medium">
-                    <Link href="#" className="hover:text-[#0B3B24]">Kebijakan Privasi</Link>
-                    <Link href="#" className="hover:text-[#0B3B24]">Kontak Darurat</Link>
-                    <Link href="#" className="hover:text-[#0B3B24]">Pusat Bantuan</Link>
-                </div>
-            </footer>
+            <FadeIn delay={100}>
+                <footer className="mx-auto mt-24 flex max-w-6xl flex-col items-center justify-between gap-4 border-t border-border px-6 pt-8 md:flex-row md:px-12">
+                    <div>
+                        <h4 className="mb-1 font-bold text-foreground">Civic Ecology Palu</h4>
+                        <p className="text-xs text-muted-foreground">
+                            © {new Date().getFullYear()} Pemerintah Kota Palu - Dinas Lingkungan Hidup. Digital Arboretum Initiative.
+                        </p>
+                    </div>
+                    <div className="flex gap-6 text-sm font-medium text-muted-foreground">
+                        <Link href="#" className="hover:text-foreground">Kebijakan Privasi</Link>
+                        <Link href="#" className="hover:text-foreground">Kontak Darurat</Link>
+                        <Link href="#" className="hover:text-foreground">Pusat Bantuan</Link>
+                    </div>
+                </footer>
+            </FadeIn>
         </div>
     );
 }
 
-// Set layout to undefined to bypass UserAppLayout and use our custom full-page design
-LaporanIndex.layout = undefined;
+LaporanIndex.layout = null;
