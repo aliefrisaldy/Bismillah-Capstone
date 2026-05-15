@@ -314,48 +314,44 @@ export default function LaporanIndex({ laporan }: Props) {
                         ) : (
                             <div className="flex flex-col gap-5">
                                 {laporan.map((item, index) => (
-                                    <FadeIn key={item.id_laporan} delay={index * 80} direction="up">
-                                        <Link href={`/user/laporan/${item.id_laporan}`} className="group block">
-                                            <div className="flex flex-col gap-5 overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:border-emerald-200 hover:shadow-md sm:flex-row dark:hover:border-emerald-800">
-                                                {Array.isArray(item.foto) ? (
-                                                    <img
-                                                        src={`/storage/${item.foto[0]}`}
-                                                        alt="Foto laporan"
-                                                        className="h-40 w-full flex-shrink-0 rounded-xl border border-border object-cover sm:h-32 sm:w-40"
-                                                    />
-                                                ) : item.foto ? (
-                                                    <img
-                                                        src={`/storage/${item.foto}`}
-                                                        alt="Foto laporan"
-                                                        className="h-40 w-full flex-shrink-0 rounded-xl border border-border object-cover sm:h-32 sm:w-40"
-                                                    />
-                                                ) : (
-                                                    <div className="flex h-40 w-full flex-shrink-0 flex-col items-center justify-center gap-2 rounded-xl border border-border bg-muted/40 text-muted-foreground sm:h-32 sm:w-40">
-                                                        <ImageOff className="h-7 w-7" />
-                                                        <span className="text-xs font-semibold">
-                                                            Tanpa foto
-                                                        </span>
-                                                        </div>
-                                                )}
-                                                <div className="flex min-w-0 flex-1 flex-col py-1">
-                                                    <div className="mb-2 flex items-center gap-3">
-                                                        <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wider ${statusConfig[item.status].color}`}>
-                                                            {statusConfig[item.status].label}
-                                                        </span>
-                                                        <span className="text-xs font-medium text-muted-foreground">
-                                                            {formatDistanceToNow(new Date(item.tanggal_laporan), { addSuffix: true, locale: id })}
-                                                        </span>
-                                                    </div>
-                                                    <h3 className="mb-2 line-clamp-1 text-lg font-bold text-card-foreground transition-colors group-hover:text-emerald-600 dark:group-hover:text-emerald-400">
-                                                        {item.alamat || 'Laporan Titik Sampah'}
-                                                    </h3>
-                                                    <p className="line-clamp-2 overflow-hidden text-sm leading-relaxed break-words text-muted-foreground">
-                                                        {item.deskripsi}
-                                                    </p>
+                                    <Link key={item.id_laporan} href={`/user/laporan/${item.id_laporan}`} className="group block">
+                                        <div className="flex flex-col gap-5 overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:border-emerald-200 hover:shadow-md sm:flex-row dark:hover:border-emerald-800">
+                                            {Array.isArray(item.foto) ? (
+                                                <img
+                                                    src={`/storage/${item.foto[0]}`}
+                                                    alt="Foto laporan"
+                                                    className="h-40 w-full flex-shrink-0 rounded-xl border border-border object-cover sm:h-32 sm:w-40"
+                                                />
+                                            ) : item.foto ? (
+                                                <img
+                                                    src={`/storage/${item.foto}`}
+                                                    alt="Foto laporan"
+                                                    className="h-40 w-full flex-shrink-0 rounded-xl border border-border object-cover sm:h-32 sm:w-40"
+                                                />
+                                            ) : (
+                                                <div className="flex h-40 w-full flex-shrink-0 flex-col items-center justify-center gap-2 rounded-xl border border-border bg-muted/40 text-muted-foreground sm:h-32 sm:w-40">
+                                                    <ImageOff className="h-7 w-7" />
+                                                    <span className="text-xs font-semibold">Tanpa foto</span>
                                                 </div>
+                                            )}
+                                            <div className="flex min-w-0 flex-1 flex-col py-1">
+                                                <div className="mb-2 flex items-center gap-3">
+                                                    <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wider ${statusConfig[item.status].color}`}>
+                                                        {statusConfig[item.status].label}
+                                                    </span>
+                                                    <span className="text-xs font-medium text-muted-foreground">
+                                                        {formatDistanceToNow(new Date(item.tanggal_laporan), { addSuffix: true, locale: id })}
+                                                    </span>
+                                                </div>
+                                                <h3 className="mb-2 line-clamp-1 text-lg font-bold text-card-foreground transition-colors group-hover:text-emerald-600 dark:group-hover:text-emerald-400">
+                                                    {item.alamat || 'Laporan Titik Sampah'}
+                                                </h3>
+                                                <p className="line-clamp-2 overflow-hidden break-words text-sm leading-relaxed text-muted-foreground">
+                                                    {item.deskripsi}
+                                                </p>
                                             </div>
-                                        </Link>
-                                    </FadeIn>
+                                        </div>
+                                    </Link>
                                 ))}
                             </div>
                         )}

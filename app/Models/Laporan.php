@@ -25,11 +25,11 @@ class Laporan extends Model
     protected function casts(): array
     {
         return [
-            'tanggal_laporan'    => 'datetime',
-            'tanggal_diperbarui' => 'datetime',
-            'latitude'           => 'decimal:8',
-            'longitude'          => 'decimal:8',
-            'foto'               => 'array',
+            'tanggal_laporan'        => 'datetime',
+            'tanggal_diperbarui'     => 'datetime',
+            'latitude'               => 'decimal:8',
+            'longitude'              => 'decimal:8',
+            'foto' => 'array',
         ];
     }
 

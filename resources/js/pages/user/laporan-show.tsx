@@ -84,7 +84,7 @@ const FadeIn = ({
             ref={domRef}
             className={`transition-all duration-700 ease-out ${className} ${
                 isVisible
-                    ? 'opacity-100 translate-y-0 translate-x-0 scale-100'
+                    ? 'translate-x-0 translate-y-0 scale-100 opacity-100'
                     : `opacity-0 ${directionClasses[direction]}`
             }`}
             style={{ transitionDelay: `${delay}ms` }}
@@ -94,7 +94,12 @@ const FadeIn = ({
     );
 };
 
-type LaporanStatus = 'menunggu' | 'diverifikasi' | 'diproses' | 'selesai' | 'ditolak';
+type LaporanStatus =
+    | 'menunggu'
+    | 'diverifikasi'
+    | 'diproses'
+    | 'selesai'
+    | 'ditolak';
 
 type RiwayatItem = {
     title: string;
@@ -108,6 +113,8 @@ type LaporanDetail = {
     kode_laporan?: string | null;
     deskripsi: string;
     foto: string[] | string | null;
+    /** Path relatif di disk `public` (kolom `foto_penanganan` pada tindak lanjut). */
+    bukti_pembersihan?: string[] | string | null;
     alamat: string | null;
     status: LaporanStatus;
     tanggal_laporan: string;
@@ -170,58 +177,6 @@ function safeDateLabel(input?: string | null) {
     return format(d, 'EEEE, d MMMM yyyy - HH:mm', { locale: id }) + ' WITA';
 }
 
-function buildFallbackRiwayat(laporan: LaporanDetail): RiwayatItem[] {
-    const base: RiwayatItem[] = [
-        {
-            title: 'Laporan Diterima',
-            desc: 'Laporan berhasil masuk ke sistem. Menunggu antrian verifikasi petugas.',
-            time: laporan.tanggal_laporan,
-            tone: 'muted',
-        },
-    ];
-
-    if (
-        laporan.status === 'diverifikasi' ||
-        laporan.status === 'diproses' ||
-        laporan.status === 'selesai'
-    ) {
-        base.unshift({
-            title: 'Diverifikasi Admin',
-            desc: 'Laporan dinyatakan valid. Foto dan lokasi sesuai.',
-            time: laporan.tanggal_diperbarui,
-            tone: 'blue',
-        });
-    }
-
-    if (laporan.status === 'diproses' || laporan.status === 'selesai') {
-        base.unshift({
-            title: 'Dalam Penanganan',
-            desc: 'Unit pelaksana bergerak menuju lokasi dan melakukan penanganan.',
-            time: laporan.tanggal_diperbarui,
-            tone: 'orange',
-        });
-    }
-
-    if (laporan.status === 'selesai') {
-        base.unshift({
-            title: 'Selesai',
-            desc: 'Penanganan telah diselesaikan.',
-            time: laporan.tanggal_diperbarui,
-            tone: 'green',
-        });
-    }
-
-    if (laporan.status === 'ditolak') {
-        base.unshift({
-            title: 'Ditolak',
-            desc: 'Laporan tidak dapat diproses. Silakan periksa keterangan.',
-            time: laporan.tanggal_diperbarui,
-            tone: 'red',
-        });
-    }
-
-    return base;
-}
 
 const toneToDot: Record<NonNullable<RiwayatItem['tone']>, string> = {
     amber: 'bg-amber-500',
@@ -255,29 +210,49 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
     const { auth } = usePage().props as any;
     const getInitials = useInitials();
     const [menuOpen, setMenuOpen] = useState(false);
-    const displayId = laporan.kode_laporan ?? `PLC-${String(laporan.id_laporan).padStart(4, '0')}`;
+    const displayId =
+        laporan.kode_laporan ??
+        `PLC-${String(laporan.id_laporan).padStart(4, '0')}`;
     const lat = toNumberOrNull(laporan.latitude ?? null);
     const lng = toNumberOrNull(laporan.longitude ?? null);
     const hasCoords = lat !== null && lng !== null;
-    const images = (Array.isArray(laporan.foto)
-        ? laporan.foto
-        : typeof laporan.foto === 'string' && laporan.foto
-          ? [laporan.foto]
-          : []) as string[];
-    const [selectedImage, setSelectedImage] = useState<string | null>(images[0] ?? null);
+    const images = (
+        Array.isArray(laporan.foto)
+            ? laporan.foto
+            : typeof laporan.foto === 'string' && laporan.foto
+              ? [laporan.foto]
+              : []
+    ) as string[];
+    const buktiImages = (
+        Array.isArray(laporan.bukti_pembersihan)
+            ? laporan.bukti_pembersihan
+            : typeof laporan.bukti_pembersihan === 'string' && laporan.bukti_pembersihan
+              ? [laporan.bukti_pembersihan]
+              : []
+    ) as string[];
+
+    const [selectedImage, setSelectedImage] = useState<string | null>(
+        images[0] ?? null,
+    );
+    const [selectedBukti, setSelectedBukti] = useState<string | null>(
+        buktiImages[0] ?? null,
+    );
     const [activeImage, setActiveImage] = useState<string | null>(null);
     const imagesKey = images.join('|');
+    const buktiKey = buktiImages.join('|');
 
     useEffect(() => {
         setSelectedImage(images[0] ?? null);
     }, [imagesKey]);
-    const resolvedRiwayat = (riwayat?.length ? riwayat : buildFallbackRiwayat(laporan)).map(
-        (r) => ({
-            ...r,
-            time: r.time ?? null,
-            tone: r.tone ?? 'muted',
-        }),
-    );
+
+    useEffect(() => {
+        setSelectedBukti(buktiImages[0] ?? null);
+    }, [buktiKey]);
+    const resolvedRiwayat = (riwayat ?? []).map((r) => ({
+        ...r,
+        time: r.time ?? null,
+        tone: r.tone ?? 'muted',
+    }));
 
     return (
         <div className="min-h-screen bg-background pb-20 font-sans selection:bg-emerald-500/30">
@@ -286,11 +261,17 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
             {/* Navbar */}
             <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 print:hidden">
                 <nav className="flex items-center justify-between px-6 py-4 md:px-12 lg:px-24">
-                    <Link href="/" className="text-xl font-bold tracking-tight text-foreground">
+                    <Link
+                        href="/"
+                        className="text-xl font-bold tracking-tight text-foreground"
+                    >
                         Civic Ecology Palu
                     </Link>
                     <div className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
-                        <Link href="/" className="transition-colors duration-200 hover:text-foreground">
+                        <Link
+                            href="/"
+                            className="transition-colors duration-200 hover:text-foreground"
+                        >
                             Home
                         </Link>
                         <Link
@@ -299,7 +280,10 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                         >
                             Laporan Saya
                         </Link>
-                        <Link href="/user/laporan/buat" className="transition-colors duration-200 hover:text-foreground">
+                        <Link
+                            href="/user/laporan/buat"
+                            className="transition-colors duration-200 hover:text-foreground"
+                        >
                             Buat Laporan
                         </Link>
                     </div>
@@ -311,15 +295,22 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                                     className="size-10 overflow-hidden rounded-full p-0 ring-2 ring-border transition-all duration-200 hover:ring-foreground/30"
                                 >
                                     <Avatar className="size-full">
-                                        <AvatarImage src={auth?.user?.avatar} alt={auth?.user?.name} />
+                                        <AvatarImage
+                                            src={auth?.user?.avatar}
+                                            alt={auth?.user?.name}
+                                        />
                                         <AvatarFallback className="bg-emerald-800 text-white">
-                                            {getInitials(auth?.user?.name ?? '')}
+                                            {getInitials(
+                                                auth?.user?.name ?? '',
+                                            )}
                                         </AvatarFallback>
                                     </Avatar>
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-56" align="end">
-                                {auth?.user && <UserMenuContent user={auth.user} />}
+                                {auth?.user && (
+                                    <UserMenuContent user={auth.user} />
+                                )}
                             </DropdownMenuContent>
                         </DropdownMenu>
 
@@ -330,11 +321,26 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                             onClick={() => setMenuOpen(!menuOpen)}
                             aria-label="Toggle menu"
                         >
-                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg
+                                className="h-6 w-6"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
                                 {menuOpen ? (
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M6 18L18 6M6 6l12 12"
+                                    />
                                 ) : (
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M4 6h16M4 12h16M4 18h16"
+                                    />
                                 )}
                             </svg>
                         </button>
@@ -343,10 +349,25 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
 
                 {/* Mobile menu (landing page style) */}
                 {menuOpen && (
-                    <div className="border-t border-border/50 px-6 py-4 md:hidden flex flex-col gap-4">
-                        <Link href="/" className="text-sm text-muted-foreground">Home</Link>
-                        <Link href="/user/laporan" className="text-sm font-semibold text-foreground">Laporan Saya</Link>
-                        <Link href="/user/laporan/buat" className="text-sm text-muted-foreground">Buat Laporan</Link>
+                    <div className="flex flex-col gap-4 border-t border-border/50 px-6 py-4 md:hidden">
+                        <Link
+                            href="/"
+                            className="text-sm text-muted-foreground"
+                        >
+                            Home
+                        </Link>
+                        <Link
+                            href="/user/laporan"
+                            className="text-sm font-semibold text-foreground"
+                        >
+                            Laporan Saya
+                        </Link>
+                        <Link
+                            href="/user/laporan/buat"
+                            className="text-sm text-muted-foreground"
+                        >
+                            Buat Laporan
+                        </Link>
                     </div>
                 )}
             </header>
@@ -356,13 +377,15 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                 <FadeIn delay={100}>
                     <div className="mb-8">
                         <p className="text-xs font-medium text-muted-foreground">
-                            Laporan <span className="mx-2">/</span> Detail #{displayId}
+                            Laporan <span className="mx-2">/</span> Detail #
+                            {displayId}
                         </p>
-                        <h1 className="mt-2 text-4xl font-extrabold leading-tight tracking-tight text-foreground md:text-5xl">
+                        <h1 className="mt-2 text-4xl leading-tight font-extrabold tracking-tight text-foreground md:text-5xl">
                             Detail Laporan #{displayId}
                         </h1>
                         <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
-                            Status terkini pembersihan lingkungan di wilayah Palu.
+                            Status terkini pembersihan lingkungan di wilayah
+                            Palu.
                         </p>
                     </div>
                 </FadeIn>
@@ -371,7 +394,10 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                 <FadeIn delay={160} direction="up" className="print:hidden">
                     <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
                         <Link href="/user/laporan" className="sm:mr-auto">
-                            <Button variant="outline" className="w-full rounded-xl border-border text-foreground hover:bg-accent hover:text-accent-foreground sm:w-auto">
+                            <Button
+                                variant="outline"
+                                className="w-full rounded-xl border-border text-foreground hover:bg-accent hover:text-accent-foreground sm:w-auto"
+                            >
                                 <ArrowLeft className="mr-2 h-4 w-4" />
                                 Kembali ke Daftar
                             </Button>
@@ -396,7 +422,11 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                                         <div className="space-y-3">
                                             <button
                                                 type="button"
-                                                onClick={() => setActiveImage(selectedImage)}
+                                                onClick={() =>
+                                                    setActiveImage(
+                                                        selectedImage,
+                                                    )
+                                                }
                                                 className="block w-full overflow-hidden rounded-2xl border border-border"
                                             >
                                                 <img
@@ -415,10 +445,13 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                                                                 key={`${img}-${idx}`}
                                                                 type="button"
                                                                 onClick={() =>
-                                                                    setSelectedImage(img)
+                                                                    setSelectedImage(
+                                                                        img,
+                                                                    )
                                                                 }
                                                                 className={`overflow-hidden rounded-xl border ${
-                                                                    img === selectedImage
+                                                                    img ===
+                                                                    selectedImage
                                                                         ? 'border-emerald-500 ring-2 ring-emerald-500/30'
                                                                         : 'border-border'
                                                                 }`}
@@ -444,11 +477,11 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                                     <h2 className="text-lg font-extrabold text-foreground">
                                         Deskripsi Temuan
                                     </h2>
-                                    <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+                                    <p className="mt-3 text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
                                         {laporan.deskripsi}
                                     </p>
 
-                                    <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:[grid-auto-rows:1fr]">
+                                    <div className="mt-6 grid grid-cols-1 gap-4 sm:[grid-auto-rows:1fr] sm:grid-cols-2">
                                         {[
                                             {
                                                 label: 'Alamat Lengkap',
@@ -464,7 +497,9 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                                                 icon: Crosshair,
                                                 iconClass:
                                                     'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300',
-                                                value: hasCoords ? `${lat}, ${lng}` : '-',
+                                                value: hasCoords
+                                                    ? `${lat}, ${lng}`
+                                                    : '-',
                                                 valueClass:
                                                     'font-mono text-sm font-semibold text-foreground',
                                             },
@@ -473,7 +508,9 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                                                 icon: CalendarDays,
                                                 iconClass:
                                                     'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300',
-                                                value: safeDateLabel(laporan.tanggal_laporan),
+                                                value: safeDateLabel(
+                                                    laporan.tanggal_laporan,
+                                                ),
                                                 valueClass:
                                                     'text-sm font-semibold text-foreground',
                                             },
@@ -489,23 +526,42 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                                                 valueClass:
                                                     'text-sm font-semibold text-foreground',
                                             },
-                                        ].map(({ label, icon: Icon, iconClass, value, valueClass }, idx) => (
-                                            <FadeIn key={label} delay={260 + idx * 70} direction="up">
-                                                <div className="flex h-full items-center gap-3 rounded-2xl border border-border bg-background p-4">
-                                                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border ${iconClass}`}>
-                                                        <Icon className="h-5 w-5" />
+                                        ].map(
+                                            (
+                                                {
+                                                    label,
+                                                    icon: Icon,
+                                                    iconClass,
+                                                    value,
+                                                    valueClass,
+                                                },
+                                                idx,
+                                            ) => (
+                                                <FadeIn
+                                                    key={label}
+                                                    delay={260 + idx * 70}
+                                                    direction="up"
+                                                >
+                                                    <div className="flex h-full items-center gap-3 rounded-2xl border border-border bg-background p-4">
+                                                        <div
+                                                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border ${iconClass}`}
+                                                        >
+                                                            <Icon className="h-5 w-5" />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
+                                                                {label}
+                                                            </p>
+                                                            <p
+                                                                className={`mt-1 ${valueClass}`}
+                                                            >
+                                                                {value}
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                    <div className="min-w-0">
-                                                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                                            {label}
-                                                        </p>
-                                                        <p className={`mt-1 ${valueClass}`}>
-                                                            {value}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </FadeIn>
-                                        ))}
+                                                </FadeIn>
+                                            ),
+                                        )}
                                     </div>
 
                                     {hasCoords ? (
@@ -531,9 +587,77 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                                                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                                                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                                         />
-                                                        <Marker position={[lat, lng]} />
-                                                        <ChangeView center={[lat, lng]} zoom={16} />
+                                                        <Marker
+                                                            position={[
+                                                                lat,
+                                                                lng,
+                                                            ]}
+                                                        />
+                                                        <ChangeView
+                                                            center={[lat, lng]}
+                                                            zoom={16}
+                                                        />
                                                     </MapContainer>
+                                                </div>
+                                            </div>
+                                        </FadeIn>
+                                    ) : null}
+
+                                    {laporan.status === 'selesai' && buktiImages.length > 0 ? (
+                                        <FadeIn
+                                            delay={hasCoords ? 620 : 560}
+                                            direction="up"
+                                        >
+                                            <div className="mt-6 rounded-2xl border border-emerald-200/60 bg-emerald-50/40 p-4 sm:p-5 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+                                                <h2 className="text-lg font-extrabold text-foreground">
+                                                    Bukti Pembersihan
+                                                </h2>
+                                                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                                                    Dokumentasi lokasi setelah penanganan oleh petugas.
+                                                </p>
+                                                <div className="mt-4 space-y-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setActiveImage(
+                                                                selectedBukti ?? buktiImages[0],
+                                                            )
+                                                        }
+                                                        className="block w-full overflow-hidden rounded-2xl border border-border"
+                                                    >
+                                                        <img
+                                                            src={`/storage/${selectedBukti ?? buktiImages[0]}`}
+                                                            alt="Bukti pembersihan"
+                                                            className="h-[200px] w-full object-cover sm:h-[260px]"
+                                                        />
+                                                    </button>
+
+                                                    {buktiImages.length > 1 ? (
+                                                        <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                                                            {buktiImages
+                                                                .slice(0, 12)
+                                                                .map((img, idx) => (
+                                                                    <button
+                                                                        key={`${img}-${idx}`}
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            setSelectedBukti(img)
+                                                                        }
+                                                                        className={`overflow-hidden rounded-xl border ${
+                                                                            img === selectedBukti
+                                                                                ? 'border-emerald-500 ring-2 ring-emerald-500/30'
+                                                                                : 'border-border'
+                                                                        }`}
+                                                                    >
+                                                                        <img
+                                                                            src={`/storage/${img}`}
+                                                                            alt={`Bukti ${idx + 1}`}
+                                                                            className="h-14 w-full object-cover sm:h-16"
+                                                                        />
+                                                                    </button>
+                                                                ))}
+                                                        </div>
+                                                    ) : null}
                                                 </div>
                                             </div>
                                         </FadeIn>
@@ -551,12 +675,12 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                     >
                         <DialogContent className="max-w-5xl p-0">
                             <DialogTitle className="sr-only">
-                                Foto laporan
+                                Pratinjau gambar
                             </DialogTitle>
                             {activeImage ? (
                                 <img
                                     src={`/storage/${activeImage}`}
-                                    alt="Foto laporan"
+                                    alt="Pratinjau gambar"
                                     className="max-h-[80vh] w-full rounded-lg object-contain"
                                 />
                             ) : null}
@@ -566,13 +690,19 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                     {/* Right: status + riwayat + hotline */}
                     <div className="space-y-6 lg:col-span-1">
                         <FadeIn delay={240} direction="left">
-                            <div className={`rounded-2xl border p-6 shadow-sm ${statusConfig[laporan.status].panel}`}>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                            <div
+                                className={`rounded-2xl border p-6 shadow-sm ${statusConfig[laporan.status].panel}`}
+                            >
+                                <p className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                                     Status Saat Ini
                                 </p>
                                 <div className="mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-extrabold tracking-wider">
-                                    <span className={`h-2.5 w-2.5 rounded-full ${statusConfig[laporan.status].dot}`} />
-                                    <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wider ${statusConfig[laporan.status].pill}`}>
+                                    <span
+                                        className={`h-2.5 w-2.5 rounded-full ${statusConfig[laporan.status].dot}`}
+                                    />
+                                    <span
+                                        className={`rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wider ${statusConfig[laporan.status].pill}`}
+                                    >
                                         {statusConfig[laporan.status].label}
                                     </span>
                                 </div>
@@ -590,13 +720,19 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
 
                                 <div className="mt-5 space-y-5">
                                     {resolvedRiwayat.map((item, idx) => (
-                                        <FadeIn key={`${item.title}-${idx}`} delay={300 + idx * 80} direction="up">
+                                        <FadeIn
+                                            key={`${item.title}-${idx}`}
+                                            delay={300 + idx * 80}
+                                            direction="up"
+                                        >
                                             <div className="relative pl-6">
                                                 <span
-                                                    className={`absolute left-0 top-1.5 h-3 w-3 rounded-full ${toneToDot[item.tone as NonNullable<RiwayatItem['tone']>]}`}
+                                                    className={`absolute top-1.5 left-0 h-3 w-3 rounded-full ${toneToDot[item.tone as NonNullable<RiwayatItem['tone']>]}`}
                                                 />
-                                                {idx !== resolvedRiwayat.length - 1 && (
-                                                    <span className="absolute left-1.5 top-5 h-[calc(100%_-_10px)] w-px bg-border" />
+                                                {idx !==
+                                                    resolvedRiwayat.length -
+                                                        1 && (
+                                                    <span className="absolute top-5 left-1.5 h-[calc(100%_-_10px)] w-px bg-border" />
                                                 )}
                                                 <div className="rounded-2xl border border-border bg-background p-4">
                                                     <div className="flex items-start justify-between gap-3">
@@ -604,7 +740,17 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                                                             {item.title}
                                                         </p>
                                                         <p className="text-[11px] text-muted-foreground">
-                                                            {item.time ? format(new Date(item.time), 'd MMM, HH:mm', { locale: id }) : ''}
+                                                            {item.time
+                                                                ? format(
+                                                                      new Date(
+                                                                          item.time,
+                                                                      ),
+                                                                      'd MMM, HH:mm',
+                                                                      {
+                                                                          locale: id,
+                                                                      },
+                                                                  )
+                                                                : ''}
                                                         </p>
                                                     </div>
                                                     {item.desc ? (
@@ -627,11 +773,13 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                                         <CircleDot className="h-5 w-5" />
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-extrabold leading-snug">
+                                        <h3 className="text-sm leading-snug font-extrabold">
                                             Punya Informasi Tambahan?
                                         </h3>
                                         <p className="mt-2 text-xs leading-relaxed text-white/80">
-                                            Hubungi petugas kami jika Anda memiliki info tambahan terkait laporan ini.
+                                            Hubungi petugas kami jika Anda
+                                            memiliki info tambahan terkait
+                                            laporan ini.
                                         </p>
                                     </div>
                                 </div>
@@ -654,7 +802,8 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                         </h4>
                         <p className="text-xs text-muted-foreground">
                             © {new Date().getFullYear()} Pemerintah Kota Palu -
-                            Dinas Lingkungan Hidup. Digital Arboretum Initiative.
+                            Dinas Lingkungan Hidup. Digital Arboretum
+                            Initiative.
                         </p>
                     </div>
                     <div className="flex gap-6 text-sm font-medium text-muted-foreground">
@@ -675,4 +824,3 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
 }
 
 LaporanShow.layout = null;
-

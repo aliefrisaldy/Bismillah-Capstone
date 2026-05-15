@@ -45,7 +45,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth.admin')->group(function
     Route::get('laporan/export',              [AdminLaporanController::class, 'export'])->name('laporan.export');
     Route::get('laporan',                     [AdminLaporanController::class, 'index'])->name('laporan.index');
     Route::get('laporan/{id}',                [AdminLaporanController::class, 'show'])->name('laporan.show');
-    Route::patch('laporan/{id}/status',       [AdminLaporanController::class, 'updateStatus'])->name('laporan.status');
+    Route::match(['patch', 'post'], 'laporan/{id}/status', [AdminLaporanController::class, 'updateStatus'])->name('laporan.status');
     Route::post('laporan/{id}/tindak-lanjut', [AdminLaporanController::class, 'storeTindakLanjut'])->name('laporan.tindak-lanjut');
 
     Route::get('peta',      [PetaController::class, 'index'])->name('peta.index');

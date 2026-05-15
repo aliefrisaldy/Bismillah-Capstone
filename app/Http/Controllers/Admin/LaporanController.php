@@ -159,15 +159,15 @@ class LaporanController extends Controller
                 'latitude' => $laporan->latitude,
                 'longitude' => $laporan->longitude,
                 'status' => $laporan->status,
-                'tanggal_laporan' => $laporan->tanggal_laporan?->format('d M Y H:i'),
+                'tanggal_laporan' => $laporan->tanggal_laporan?->toISOString(),
                 'pelapor' => [
                     'nama' => $laporan->user?->nama,
                     'email' => $laporan->user?->email,
                     'no_telpon' => $laporan->user?->no_telpon,
                 ],
-                'tindak_lanjut' => $laporan->tindakLanjut->map(fn($t) => [
+                'tindak_lanjut' => $laporan->tindakLanjut->map(fn ($t) => [
                     'catatan' => $t->catatan,
-                    'foto_penanganan' => $t->foto_penanganan,
+                    'foto_penanganan' => TindakLanjut::normalizeFotoPaths($t->foto_penanganan),
                     'tanggal' => $t->tanggal?->format('d M Y H:i'),
                     'admin' => $t->admin?->nama,
                 ]),
@@ -184,45 +184,105 @@ class LaporanController extends Controller
 
     public function updateStatus(Request $request, $id)
     {
-        $request->validate([
-            'status' => 'required|in:menunggu,diverifikasi,diproses,selesai,ditolak',
-            'catatan' => 'nullable|string',
-        ]);
-
         $laporan = Laporan::findOrFail($id);
         $statusLama = $laporan->status;
 
-        $laporan->update(['status' => $request->status]);
+        if (in_array($statusLama, ['selesai', 'ditolak'], true)) {
+            return back()->withErrors([
+                'status' => 'Laporan berstatus final tidak dapat diubah lagi.',
+            ]);
+        }
+
+        $request->validate([
+            'status' => 'required|in:menunggu,diverifikasi,diproses,selesai,ditolak',
+            'catatan' => 'nullable|string',
+            'foto_penanganan' => 'nullable|array',
+            'foto_penanganan.*' => 'image|max:5120',
+        ]);
+
+        $statusBaru = (string) $request->status;
+
+        if (! $this->isAllowedStatusTransition($statusLama, $statusBaru)) {
+            return back()->withErrors([
+                'status' => 'Perubahan status harus mengikuti alur: Menunggu → Diverifikasi → Diproses → Selesai. Penolakan dapat dilakukan kapan saja sebelum selesai.',
+            ]);
+        }
+
+        $fotoFiles = array_filter($request->file('foto_penanganan') ?? []);
+
+        if ($statusBaru === 'selesai' && count($fotoFiles) === 0) {
+            return back()->withErrors([
+                'foto_penanganan' => 'Unggah minimal satu foto bukti pembersihan untuk menyelesaikan laporan.',
+            ]);
+        }
+
+        $laporan->update(['status' => $statusBaru]);
 
         RiwayatStatus::create([
             'id_laporan' => $laporan->id_laporan,
             'id_admin' => Auth::guard('admin')->id(),
             'status_lama' => $statusLama,
-            'status_baru' => $request->status,
+            'status_baru' => $statusBaru,
             'catatan' => $request->catatan,
         ]);
 
+        if ($statusBaru === 'selesai') {
+            $fotoPaths = collect($fotoFiles)
+                ->map(fn ($file) => $file->store('tindak_lanjut', 'public'))
+                ->values()
+                ->all();
+
+            TindakLanjut::create([
+                'id_laporan' => $laporan->id_laporan,
+                'id_admin' => Auth::guard('admin')->id(),
+                'catatan' => $request->catatan,
+                'foto_penanganan' => $fotoPaths,
+            ]);
+        }
+
         return back()->with('success', 'Status laporan berhasil diperbarui.');
+    }
+
+    /**
+     * Alur maju: menunggu → diverifikasi → diproses → selesai.
+     * Status "ditolak" selalu diperbolehkan dari status non-final (sebelum selesai).
+     */
+    private function isAllowedStatusTransition(string $lama, string $baru): bool
+    {
+        if ($lama === $baru) {
+            return false;
+        }
+
+        if ($baru === 'ditolak') {
+            return $lama !== 'selesai';
+        }
+
+        return match ($lama) {
+            'menunggu' => $baru === 'diverifikasi',
+            'diverifikasi' => $baru === 'diproses',
+            'diproses' => $baru === 'selesai',
+            default => false,
+        };
     }
 
     public function storeTindakLanjut(Request $request, $id)
     {
         $request->validate([
             'catatan' => 'required|string',
-            'foto_penanganan' => 'nullable|image|max:5120',
+            'foto_penanganan' => 'nullable|array',
+            'foto_penanganan.*' => 'image|max:5120',
         ]);
 
-        $fotoPath = null;
-        if ($request->hasFile('foto_penanganan')) {
-            $fotoPath = $request->file('foto_penanganan')
-                ->store('tindak_lanjut', 'public');
-        }
+        $fotoPaths = collect(array_filter($request->file('foto_penanganan') ?? []))
+            ->map(fn ($file) => $file->store('tindak_lanjut', 'public'))
+            ->values()
+            ->all();
 
         TindakLanjut::create([
             'id_laporan' => $id,
             'id_admin' => Auth::guard('admin')->id(),
             'catatan' => $request->catatan,
-            'foto_penanganan' => $fotoPath,
+            'foto_penanganan' => count($fotoPaths) > 0 ? $fotoPaths : null,
         ]);
 
         return back()->with('success', 'Tindak lanjut berhasil ditambahkan.');
