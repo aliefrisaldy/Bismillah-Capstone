@@ -17,7 +17,11 @@ type Props = {
     canRegister: boolean;
 };
 
-export default function Login({ status, canResetPassword, canRegister }: Props) {
+export default function Login({
+    status,
+    canResetPassword,
+    canRegister,
+}: Props) {
     return (
         <>
             <Head title="Masuk" />
@@ -31,7 +35,10 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
                     <>
                         {/* Email Input */}
                         <div className="flex flex-col gap-2.5">
-                            <Label htmlFor="email" className="text-sm font-medium text-foreground">
+                            <Label
+                                htmlFor="email"
+                                className="text-sm font-medium text-foreground"
+                            >
                                 Nama Pengguna / Email
                             </Label>
                             <Input
@@ -43,7 +50,7 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
                                 tabIndex={1}
                                 autoComplete="email"
                                 placeholder="Nama Pengguna / Email"
-                                className="h-11 rounded-full border-2 border-stone-300 bg-transparent px-5 py-3 text-sm placeholder:text-stone-400 transition-colors hover:border-stone-400 focus:border-stone-500 focus-visible:ring-0 dark:border-stone-600 dark:placeholder:text-stone-500 dark:hover:border-stone-500 dark:focus:border-stone-400"
+                                className="h-11 rounded-full border-2 border-stone-300 bg-transparent px-5 py-3 text-sm transition-colors placeholder:text-stone-400 hover:border-stone-400 focus:border-stone-500 focus-visible:ring-0 dark:border-stone-600 dark:placeholder:text-stone-500 dark:hover:border-stone-500 dark:focus:border-stone-400"
                             />
                             <InputError message={errors.email} />
                         </div>
@@ -51,13 +58,16 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
                         {/* Password Input */}
                         <div className="flex flex-col gap-2.5">
                             <div className="flex items-center justify-between">
-                                <Label htmlFor="password" className="text-sm font-medium text-foreground">
+                                <Label
+                                    htmlFor="password"
+                                    className="text-sm font-medium text-foreground"
+                                >
                                     Kata Sandi
                                 </Label>
                                 {canResetPassword && (
                                     <TextLink
                                         href={request()}
-                                        className="text-xs font-medium text-foreground hover:text-muted-foreground transition-colors"
+                                        className="text-xs font-medium text-foreground transition-colors hover:text-muted-foreground"
                                         tabIndex={5}
                                     >
                                         Lupa Kata Sandi?
@@ -71,20 +81,23 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
                                 tabIndex={2}
                                 autoComplete="current-password"
                                 placeholder="Kata Sandi"
-                                className="h-11 rounded-full border-2 border-stone-300 bg-transparent px-5 py-3 text-sm placeholder:text-stone-400 transition-colors hover:border-stone-400 focus:border-stone-500 focus-visible:ring-0 dark:border-stone-600 dark:placeholder:text-stone-500 dark:hover:border-stone-500 dark:focus:border-stone-400"
+                                className="h-11 rounded-full border-2 border-stone-300 bg-transparent px-5 py-3 text-sm transition-colors placeholder:text-stone-400 hover:border-stone-400 focus:border-stone-500 focus-visible:ring-0 dark:border-stone-600 dark:placeholder:text-stone-500 dark:hover:border-stone-500 dark:focus:border-stone-400"
                             />
                             <InputError message={errors.password} />
                         </div>
 
                         {/* Remember Me */}
                         <div className="flex items-center gap-2.5">
-                            <Checkbox 
-                                id="remember" 
-                                name="remember" 
+                            <Checkbox
+                                id="remember"
+                                name="remember"
                                 tabIndex={3}
                                 className="rounded"
                             />
-                            <Label htmlFor="remember" className="text-sm font-medium text-foreground cursor-pointer">
+                            <Label
+                                htmlFor="remember"
+                                className="cursor-pointer text-sm font-medium text-foreground"
+                            >
                                 Ingat saya
                             </Label>
                         </div>
@@ -92,7 +105,7 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
                         {/* Submit Button */}
                         <Button
                             type="submit"
-                            className="mt-1 h-11 w-full rounded-full bg-stone-900 px-6 py-3 text-base font-semibold text-white transition-all hover:bg-stone-800 active:bg-stone-950 disabled:opacity-60 disabled:cursor-not-allowed dark:bg-white dark:text-stone-900 dark:hover:bg-stone-100"
+                            className="mt-1 h-11 w-full rounded-full bg-stone-900 px-6 py-3 text-base font-semibold text-white transition-all hover:bg-stone-800 active:bg-stone-950 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-stone-900 dark:hover:bg-stone-100"
                             tabIndex={4}
                             disabled={processing}
                         >
@@ -103,59 +116,48 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
                         {/* Divider */}
                         <div className="flex items-center gap-3 py-2">
                             <div className="h-px flex-1 bg-stone-300 dark:bg-stone-600" />
-                            <span className="text-xs text-muted-foreground">atau lanjut dengan</span>
+                            <span className="text-xs text-muted-foreground">
+                                jika anda ingin lebih mudah lanjut dengan
+                            </span>
                             <div className="h-px flex-1 bg-stone-300 dark:bg-stone-600" />
                         </div>
 
-                        {/* Social Buttons */}
-                        <div className="flex justify-center gap-3">
-                            <button 
-                                type="button"
-                                className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-stone-300 bg-white text-stone-900 transition-all hover:border-stone-400 hover:bg-stone-50 dark:border-stone-600 dark:bg-stone-800 dark:text-white dark:hover:border-stone-500 dark:hover:bg-stone-700"
-                                aria-label="Login with Google"
-                            >
-                                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                                    <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle" fontSize="16" fontWeight="bold">G</text>
-                                </svg>
-                            </button>
-                            <button 
-                                type="button"
-                                className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-stone-300 bg-white text-stone-900 transition-all hover:border-stone-400 hover:bg-stone-50 dark:border-stone-600 dark:bg-stone-800 dark:text-white dark:hover:border-stone-500 dark:hover:bg-stone-700"
-                                aria-label="Login with Apple"
-                            >
-                                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.48-2.54 3.09l-.42.02zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-                                </svg>
-                            </button>
-                            <button 
-                                type="button"
-                                className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-blue-500 bg-blue-50 text-blue-600 transition-all hover:border-blue-600 hover:bg-blue-100 dark:border-blue-600 dark:bg-blue-950 dark:text-blue-400 dark:hover:border-blue-500 dark:hover:bg-blue-900"
-                                aria-label="Login with Facebook"
-                            >
-                                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                                </svg>
-                            </button>
-                        </div>
+                        <a
+                            href="/auth/google"
+                            className="flex h-12 w-full items-center justify-center gap-3 rounded-full border-2 border-stone-300 bg-white px-5 text-sm font-medium text-stone-800 transition-all hover:border-stone-400 hover:bg-stone-50 dark:border-stone-600 dark:bg-stone-800 dark:text-white dark:hover:border-stone-500 dark:hover:bg-stone-700"
+                        >
+                            <svg className="h-5 w-5" viewBox="0 0 24 24">
+                                <path
+                                    fill="#4285F4"
+                                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                                />
+                                <path
+                                    fill="#34A853"
+                                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                                />
+                                <path
+                                    fill="#FBBC05"
+                                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                                />
+                                <path
+                                    fill="#EA4335"
+                                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                                />
+                            </svg>
 
-                        {/* Portal DLH Button */}
-                        <a href="/admin/login" className="w-full">
-                            <button
-                                type="button"
-                                className="w-full rounded-full border-2 border-dashed border-emerald-600 px-6 py-2.5 text-sm font-medium text-emerald-600 transition-all hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
-                            >
-                                🛡️ Portal Petugas DLH
-                            </button>
+                            <span>
+                                Masuk Dengan Akun Google Anda
+                            </span>
                         </a>
 
                         {/* Register Link */}
                         {canRegister && (
                             <div className="text-center text-sm text-muted-foreground">
                                 Belum punya akun?{' '}
-                                <TextLink 
-                                    href={register()} 
-                                    tabIndex={6} 
-                                    className="font-semibold text-emerald-600 hover:text-emerald-700 transition-colors dark:text-emerald-500 dark:hover:text-emerald-400"
+                                <TextLink
+                                    href={register()}
+                                    tabIndex={6}
+                                    className="font-semibold text-emerald-600 transition-colors hover:text-emerald-700 dark:text-emerald-500 dark:hover:text-emerald-400"
                                 >
                                     Daftar sekarang
                                 </TextLink>
@@ -176,5 +178,6 @@ export default function Login({ status, canResetPassword, canRegister }: Props) 
 
 Login.layout = {
     title: 'Selamat Datang Kembali!',
-    description: 'Wujudkan Kota Palu yang Bersih. Silakan masuk untuk mulai berkontribusi.',
+    description:
+        'Wujudkan Kota Palu yang Bersih. Silakan masuk untuk mulai berkontribusi.',
 };

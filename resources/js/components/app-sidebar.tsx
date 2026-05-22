@@ -1,8 +1,9 @@
 import { Link } from '@inertiajs/react';
-import { 
-    LayoutGrid, 
-    ClipboardList, 
+import {
+    LayoutGrid,
+    ClipboardList,
     MapPin,
+    Route,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -34,6 +35,11 @@ const mainNavItems: NavItem[] = [
         title: 'Peta Sebaran',
         href: '/admin/peta',
         icon: MapPin,
+    },
+    {
+        title: 'Jalur Angkut',
+        href: '/admin/jalur-angkut',
+        icon: Route,
     },
 ];
 

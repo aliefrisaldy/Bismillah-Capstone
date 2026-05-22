@@ -7,6 +7,10 @@ use App\Http\Controllers\User\LaporanController as UserLaporanController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LaporanController as AdminLaporanController;
 use App\Http\Controllers\Admin\PetaController;
+use App\Http\Controllers\Admin\JalurAngkutController;
+use App\Http\Controllers\Auth\GoogleAuthController;
+
+
 
 // ─── LANDING PAGE ─────────────────────────────────────────
 Route::inertia('/', 'welcome', [
@@ -29,6 +33,10 @@ Route::post('/admin/login', [AdminAuthController::class, 'login']);
 Route::post('/admin/logout', [AdminAuthController::class, 'logout'])
      ->name('admin.logout');
 
+// Google OAuth
+Route::get('/auth/google',          [GoogleAuthController::class, 'redirect'])->name('auth.google');
+Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
+
 // ─── HALAMAN USER (protected) ─────────────────────────────
 Route::prefix('user')->name('user.')->middleware('auth')->group(function () {
     Route::get('dashboard',    [UserLaporanController::class, 'index'])->name('dashboard');
@@ -50,4 +58,10 @@ Route::prefix('admin')->name('admin.')->middleware('auth.admin')->group(function
 
     Route::get('peta',      [PetaController::class, 'index'])->name('peta.index');
     Route::get('peta/data', [PetaController::class, 'data'])->name('peta.data');
+
+    Route::get('/jalur-angkut', [JalurAngkutController::class, 'index']);
+    Route::get('/jalur-angkut/data', [JalurAngkutController::class, 'data']);
+    Route::put('/jalur-angkut/{id}', [JalurAngkutController::class, 'update']);
+    Route::patch('/jalur-angkut/{id}/toggle', [JalurAngkutController::class, 'toggleAktif']);
+    Route::get('/jalur-angkut/kelurahans', [JalurAngkutController::class, 'kelurahans']);
 });

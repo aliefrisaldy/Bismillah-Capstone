@@ -16,18 +16,21 @@ class PetaController extends Controller
 
     public function data(Request $request)
     {
-        $query = Laporan::with('user')
-                        ->whereNotNull('latitude')
-                        ->whereNotNull('longitude');
+        $allowed = ['menunggu', 'diverifikasi', 'diproses', 'selesai', 'ditolak'];
 
-        if ($request->filled('status')) {
+        $query = Laporan::with('user')
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->whereIn('status', $allowed);
+
+        if ($request->filled('status') && in_array($request->status, $allowed, true)) {
             $query->where('status', $request->status);
         }
 
-        $laporan = $query->get()->map(fn($item) => [
+        $laporan = $query->get()->map(fn ($item) => [
             'id'        => $item->id_laporan,
-            'latitude'  => $item->latitude,
-            'longitude' => $item->longitude,
+            'latitude'  => (float) $item->latitude,
+            'longitude' => (float) $item->longitude,
             'alamat'    => $item->alamat,
             'status'    => $item->status,
             'tanggal'   => $item->tanggal_laporan?->format('d M Y'),
