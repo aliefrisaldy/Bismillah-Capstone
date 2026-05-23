@@ -25,7 +25,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                                 <path d="M9 2C6 2 3.5 4.5 3.5 7.5C3.5 11 9 16 9 16C9 16 14.5 11 14.5 7.5C14.5 4.5 12 2 9 2Z" fill="white"/>
                             </svg>
                         </div>
-                        <span className="text-sm font-semibold">Palu Clean City</span>
+                        <span className="text-sm font-semibold">Pakagasa</span>
                     </Link>
 
                     {/* Nav Links */}
@@ -126,7 +126,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                                         <path d="M9 2C6 2 3.5 4.5 3.5 7.5C3.5 11 9 16 9 16C9 16 14.5 11 14.5 7.5C14.5 4.5 12 2 9 2Z" fill="white"/>
                                     </svg>
                                 </div>
-                                <span className="text-sm font-semibold">Palu Clean City</span>
+                                <span className="text-sm font-semibold">Pakagasa</span>
                             </div>
                             <p className="text-xs text-muted-foreground leading-relaxed">
                                 Inisiatif digital Pemerintah Kota Palu untuk meningkatkan kebersihan dan kualitas hidup warga melalui transparansi pelaporan sampah.

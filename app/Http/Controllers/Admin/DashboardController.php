@@ -31,7 +31,7 @@ class DashboardController extends Controller
                 'pelapor' => $item->user?->nama,
             ]);
 
-        return Inertia::render('dashboard', [ // ← tetap pakai halaman bawaan
+        return Inertia::render('admin/dashboard', [ // ← update to admin/dashboard
             'stats' => $stats,
             'laporan_terbaru' => $laporan_terbaru,
         ]);

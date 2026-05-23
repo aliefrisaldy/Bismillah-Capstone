@@ -59,11 +59,10 @@ const FadeIn = ({ children, delay = 0, direction = 'up', className = '' }: {
     return (
         <div
             ref={domRef}
-            className={`transition-all duration-700 ease-out ${className} ${
-                isVisible
-                    ? 'opacity-100 translate-y-0 translate-x-0 scale-100'
-                    : `opacity-0 ${directionClasses[direction]}`
-            }`}
+            className={`transition-all duration-700 ease-out ${className} ${isVisible
+                ? 'opacity-100 translate-y-0 translate-x-0 scale-100'
+                : `opacity-0 ${directionClasses[direction]}`
+                }`}
             style={{ transitionDelay: `${delay}ms` }}
         >
             {children}
@@ -85,11 +84,11 @@ type Laporan = {
 type Props = { laporan: Laporan[] };
 
 const statusConfig = {
-    menunggu:     { label: 'MENUNGGU',     color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' },
+    menunggu: { label: 'MENUNGGU', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' },
     diverifikasi: { label: 'DIVERIFIKASI', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
-    diproses:     { label: 'DIPROSES',     color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' },
-    selesai:      { label: 'SELESAI',      color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
-    ditolak:      { label: 'DITOLAK',      color: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
+    diproses: { label: 'DIPROSES', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' },
+    selesai: { label: 'SELESAI', color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
+    ditolak: { label: 'DITOLAK', color: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
 };
 
 export default function LaporanIndex({ laporan }: Props) {
@@ -111,7 +110,7 @@ export default function LaporanIndex({ laporan }: Props) {
             <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
                 <nav className="flex items-center justify-between px-6 py-4 md:px-12 lg:px-24">
                     <Link href="/" className="text-xl font-bold tracking-tight text-foreground">
-                        Civic Ecology Palu
+                        Pakagasa
                     </Link>
                     <div className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
                         <Link href="/" className="transition-colors duration-200 hover:text-foreground">
@@ -367,9 +366,9 @@ export default function LaporanIndex({ laporan }: Props) {
                                 </div>
                                 <ul className="space-y-4">
                                     {[
-                                        { icon: Info,  text: 'Panduan cara melapor yang efektif' },
+                                        { icon: Info, text: 'Panduan cara melapor yang efektif' },
                                         { icon: Phone, text: 'Hubungi Hotline Dinas Lingkungan Hidup' },
-                                        { icon: MapPin,text: 'Lihat lokasi TPS Resmi terdekat' },
+                                        { icon: MapPin, text: 'Lihat lokasi TPS Resmi terdekat' },
                                     ].map(({ icon: Icon, text }) => (
                                         <li key={text}>
                                             <Link href="#" className="group flex items-start gap-3 text-sm text-blue-700/80 transition-colors hover:text-blue-800 dark:text-blue-400/80 dark:hover:text-blue-300">
@@ -389,7 +388,7 @@ export default function LaporanIndex({ laporan }: Props) {
             <FadeIn delay={100}>
                 <footer className="mx-auto mt-24 flex max-w-6xl flex-col items-center justify-between gap-4 border-t border-border px-6 pt-8 md:flex-row md:px-12">
                     <div>
-                        <h4 className="mb-1 font-bold text-foreground">Civic Ecology Palu</h4>
+                        <h4 className="mb-1 font-bold text-foreground">Pakagasa</h4>
                         <p className="text-xs text-muted-foreground">
                             © {new Date().getFullYear()} Pemerintah Kota Palu - Dinas Lingkungan Hidup. Digital Arboretum Initiative.
                         </p>

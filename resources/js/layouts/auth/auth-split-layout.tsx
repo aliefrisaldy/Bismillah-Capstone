@@ -43,7 +43,7 @@ export default function AuthSplitLayout({
                                     <AppLogoIcon className="size-5 fill-white text-white" />
                                 </div>
                                 <span className="text-sm font-semibold text-foreground">
-                                    Palu Clean City
+                                    Pakagasa
                                 </span>
                             </Link>
 
@@ -101,7 +101,7 @@ export default function AuthSplitLayout({
                     >
                         <h2 className="text-xl font-bold text-foreground">
                             Wujudkan kota yang lebih bersih dan tertata bersama
-                            Palu Clean City
+                            Pakagasa
                         </h2>
                     </div>
 

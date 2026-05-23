@@ -56,7 +56,7 @@ export default function Welcome() {
 
     return (
         <div className="bg-background min-h-screen font-sans selection:bg-green-500/30">
-            <Head title="Beranda | Palu Clean City" />
+            <Head title="Beranda | Pakagasa" />
 
             {/* ── HERO ──────────────────────────────────────── */}
             <section className="relative overflow-hidden pt-16 md:pt-24 pb-20 lg:pt-32 lg:pb-28">
@@ -77,7 +77,7 @@ export default function Welcome() {
                                       <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                                     </span>
                                     <span className="text-xs font-bold uppercase tracking-wider text-green-700 dark:text-green-400">
-                                        Palu Clean City Initiative
+                                        Pakagasa Initiative
                                     </span>
                                 </div>
                             </FadeIn>

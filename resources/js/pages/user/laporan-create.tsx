@@ -216,7 +216,7 @@ export default function LaporanCreate() {
                         href="/"
                         className="text-xl font-bold tracking-tight text-foreground"
                     >
-                        Civic Ecology Palu
+                        Pakagasa
                     </Link>
 
                     <div className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
@@ -655,7 +655,7 @@ export default function LaporanCreate() {
                 <footer className="mx-auto mt-24 flex max-w-6xl flex-col items-center justify-between gap-4 border-t border-border px-6 pt-8 md:flex-row md:px-12">
                     <div>
                         <h4 className="mb-1 font-bold text-foreground">
-                            Civic Ecology Palu
+                            Pakagasa
                         </h4>
                         <p className="text-xs text-muted-foreground">
                             © {new Date().getFullYear()} Pemerintah Kota Palu -
