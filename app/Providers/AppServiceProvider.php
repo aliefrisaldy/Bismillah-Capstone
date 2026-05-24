@@ -23,9 +23,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (config('app.env') === 'local') {
-            URL::forceRootUrl(config('app.url'));
-        }
+        // if (config('app.env') === 'local') {
+        //     URL::forceRootUrl(config('app.url'));
+        // }
     }
 
     /**

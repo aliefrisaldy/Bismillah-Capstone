@@ -1014,9 +1014,11 @@ export default function Peta() {
     const [loading, setLoading] = useState(false);
 
     // ── Filter kelurahan laporan (GeoJSON batas wilayah) ──
+    const [filterKecamatan, setFilterKecamatan] = useState<string>('');
     const [kelurahanGeoJson, setKelurahanGeoJson] =
         useState<KelurahanGeoJSON | null>(null);
     const [kelurahanList, setKelurahanList] = useState<string[]>([]);
+    const [kecamatanList, setKecamatanList] = useState<string[]>([]);
     const [filterKelurahan, setFilterKelurahan] = useState<string>('');
 
     // ── Map ──
@@ -1102,17 +1104,41 @@ export default function Peta() {
             .then((r) => r.json())
             .then((data: KelurahanGeoJSON) => {
                 setKelurahanGeoJson(data);
+
+                // Kecamatan unik
+                const kecamatans = [
+                    ...new Set(
+                        data.features
+                            .map((f) => f.properties?.kecamatan)
+                            .filter((k): k is string => Boolean(k)),
+                    ),
+                ].sort((a, b) => a.localeCompare(b, 'id'));
+                setKecamatanList(kecamatans);
+
+                // Semua kelurahan (untuk saat kecamatan belum dipilih)
                 const names = [
                     ...new Set(
                         data.features
                             .map((f) => f.properties?.kelurahan)
-                            .filter((name): name is string => Boolean(name)),
+                            .filter((n): n is string => Boolean(n)),
                     ),
                 ].sort((a, b) => a.localeCompare(b, 'id'));
                 setKelurahanList(names);
             })
             .catch(console.error);
     }, []);
+
+    const filteredKelurahanList = useMemo(() => {
+        if (!filterKecamatan || !kelurahanGeoJson) return kelurahanList;
+        return [
+            ...new Set(
+                kelurahanGeoJson.features
+                    .filter((f) => f.properties.kecamatan === filterKecamatan)
+                    .map((f) => f.properties.kelurahan)
+                    .filter((n): n is string => Boolean(n)),
+            ),
+        ].sort((a, b) => a.localeCompare(b, 'id'));
+    }, [filterKecamatan, kelurahanGeoJson, kelurahanList]);
 
     const filteredLaporan = useMemo(() => {
         if (!filterKelurahan || !kelurahanGeoJson) return laporan;
@@ -1169,6 +1195,10 @@ export default function Peta() {
     useEffect(() => {
         if (filterTipe) setJalurVisible(true);
     }, [filterTipe]);
+
+    useEffect(() => {
+        setFilterKelurahan('');
+    }, [filterKecamatan]);
 
     // Tutup jalur popup saat filter berubah
     useEffect(() => {
@@ -1384,16 +1414,34 @@ export default function Peta() {
                         ))}
                     </select>
                     <select
+                        value={filterKecamatan}
+                        onChange={(e) => setFilterKecamatan(e.target.value)}
+                        className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    >
+                        <option value="">Semua Kecamatan</option>
+                        {kecamatanList.map((k) => (
+                            <option key={k} value={k}>
+                                {k}
+                            </option>
+                        ))}
+                    </select>
+
+                    {/* LAMA: select kelurahan — hanya ubah kelurahanList → filteredKelurahanList */}
+                    <select
                         value={filterKelurahan}
                         onChange={(e) => setFilterKelurahan(e.target.value)}
                         className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                     >
                         <option value="">Semua Kelurahan</option>
-                        {kelurahanList.map((k) => (
-                            <option key={k} value={k}>
-                                {k}
-                            </option>
-                        ))}
+                        {filteredKelurahanList.map(
+                            (
+                                k, // <-- perubahan di sini
+                            ) => (
+                                <option key={k} value={k}>
+                                    {k}
+                                </option>
+                            ),
+                        )}
                     </select>
                     <span className="ml-auto text-xs text-muted-foreground">
                         {loading
@@ -1409,6 +1457,16 @@ export default function Peta() {
                             Reset filter
                         </button>
                     )}
+                    {filterKecamatan && (
+                        <button
+                            type="button"
+                            onClick={() => setFilterKecamatan('')}
+                            className="text-xs font-semibold text-emerald-700 hover:underline dark:text-emerald-300"
+                        >
+                            Reset filter kecamatan
+                        </button>
+                    )}
+
                     {filterKelurahan && (
                         <button
                             type="button"
