@@ -1,6 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,20 +11,84 @@ import {
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useInitials } from '@/hooks/use-initials';
 
-type Auth = {
-    user: { name: string; email: string; avatar?: string } | null;
+// ── FadeIn ────────────────────────────────────────────────
+export const FadeIn = ({
+    children,
+    delay = 0,
+    direction = 'up',
+    className = '',
+}: {
+    children: ReactNode;
+    delay?: number;
+    direction?: 'up' | 'down' | 'left' | 'right' | 'none';
+    className?: string;
+}) => {
+    const [isVisible, setIsVisible] = useState(false);
+    const domRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        setIsVisible(true);
+
+                        if (domRef.current) {
+observer.unobserve(domRef.current);
+}
+                    }
+                });
+            },
+            { threshold: 0.1 },
+        );
+        const currentRef = domRef.current;
+
+        if (currentRef) {
+observer.observe(currentRef);
+}
+
+        return () => {
+ if (currentRef) {
+observer.unobserve(currentRef);
+} 
+};
+    }, []);
+
+    const directionClasses = {
+        up: 'translate-y-10',
+        down: '-translate-y-10',
+        left: 'translate-x-10',
+        right: '-translate-x-10',
+        none: 'scale-95',
+    };
+
+    return (
+        <div
+            ref={domRef}
+            className={`transition-all duration-700 ease-out ${className} ${
+                isVisible
+                    ? 'opacity-100 translate-y-0 translate-x-0 scale-100'
+                    : `opacity-0 ${directionClasses[direction]}`
+            }`}
+            style={{ transitionDelay: `${delay}ms` }}
+        >
+            {children}
+        </div>
+    );
 };
 
+// ── Nav links ─────────────────────────────────────────────
 const NAV_LINKS = [
-    { href: '/',                   label: 'Beranda',    exact: true  },
+    { href: '/',                   label: 'Beranda',         exact: true  },
     { href: '/user/laporan',       label: 'Laporan Saya', exact: false },
     { href: '/user/laporan/buat',  label: 'Buat Laporan', exact: true  },
     { href: '/user/peta',          label: 'Peta Laporan', exact: false },
     { href: '/user/jalur-angkut',  label: 'Jalur Angkut', exact: false },
 ];
 
-export default function PublicLayout({ children }: { children: ReactNode }) {
-    const { auth } = usePage<{ auth: Auth }>().props;
+// ── Layout ────────────────────────────────────────────────
+export default function UserLayout({ children }: { children: ReactNode }) {
+    const { auth } = usePage().props as any;
     const currentUrl = usePage().url;
     const getInitials = useInitials();
     const [menuOpen, setMenuOpen] = useState(false);
@@ -67,44 +131,27 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {auth?.user ? (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        className="size-10 overflow-hidden rounded-full p-0 ring-2 ring-border transition-all duration-200 hover:ring-foreground/30"
-                                    >
-                                        <Avatar className="size-full">
-                                            <AvatarImage
-                                                src={auth?.user?.avatar}
-                                                alt={auth?.user?.name}
-                                            />
-                                            <AvatarFallback className="bg-emerald-800 text-white">
-                                                {getInitials(auth?.user?.name ?? '')}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56" align="end">
-                                    {auth?.user && <UserMenuContent user={auth.user} />}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        ) : (
-                            <div className="hidden items-center gap-3 md:flex">
-                                <Link
-                                    href="/login"
-                                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    className="size-10 overflow-hidden rounded-full p-0 ring-2 ring-border transition-all duration-200 hover:ring-foreground/30"
                                 >
-                                    Masuk
-                                </Link>
-                                <Link
-                                    href="/register"
-                                    className="rounded-full bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
-                                >
-                                    Daftar
-                                </Link>
-                            </div>
-                        )}
+                                    <Avatar className="size-full">
+                                        <AvatarImage
+                                            src={auth?.user?.avatar}
+                                            alt={auth?.user?.name}
+                                        />
+                                        <AvatarFallback className="bg-emerald-800 text-white">
+                                            {getInitials(auth?.user?.name ?? '')}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-56" align="end">
+                                {auth?.user && <UserMenuContent user={auth.user} />}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
 
                         <button
                             type="button"
@@ -140,44 +187,32 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                                 {label}
                             </Link>
                         ))}
-                        {!auth?.user && (
-                            <div className="flex flex-col gap-2 pt-2 border-t border-border">
-                                <Link
-                                    href="/login"
-                                    className="text-sm text-center text-muted-foreground"
-                                >
-                                    Masuk
-                                </Link>
-                                <Link
-                                    href="/register"
-                                    className="rounded-full bg-green-600 px-4 py-2 text-center text-sm font-medium text-white"
-                                >
-                                    Daftar
-                                </Link>
-                            </div>
-                        )}
                     </div>
                 )}
             </header>
 
-            {/* Content */}
-            <main>{children}</main>
+            {/* Content — max-w-4xl sama persis dengan laporan-create */}
+            <main className="mx-auto mt-8 max-w-6xl px-6 md:px-12 lg:mt-12">
+                {children}
+            </main>
 
             {/* Footer */}
-            <footer className="mx-auto mt-24 flex max-w-6xl flex-col items-center justify-between gap-4 border-t border-border px-6 pt-8 md:flex-row md:px-12">
-                <div>
-                    <h4 className="mb-1 font-bold text-foreground">Pakagasa</h4>
-                    <p className="text-xs text-muted-foreground">
-                        © {new Date().getFullYear()} Pemerintah Kota Palu -
-                        Dinas Lingkungan Hidup. Digital Arboretum Initiative.
-                    </p>
-                </div>
-                <div className="flex gap-6 text-sm font-medium text-muted-foreground">
-                    <Link href="#" className="hover:text-foreground">Kebijakan Privasi</Link>
-                    <Link href="#" className="hover:text-foreground">Kontak Darurat</Link>
-                    <Link href="#" className="hover:text-foreground">Pusat Bantuan</Link>
-                </div>
-            </footer>
+            <FadeIn delay={100}>
+                <footer className="mx-auto mt-24 flex max-w-6xl flex-col items-center justify-between gap-4 border-t border-border px-6 pt-8 md:flex-row md:px-12">
+                    <div>
+                        <h4 className="mb-1 font-bold text-foreground">Pakagasa</h4>
+                        <p className="text-xs text-muted-foreground">
+                            © {new Date().getFullYear()} Pemerintah Kota Palu -
+                            Dinas Lingkungan Hidup. Digital Arboretum Initiative.
+                        </p>
+                    </div>
+                    <div className="flex gap-6 text-sm font-medium text-muted-foreground">
+                        <Link href="#" className="hover:text-foreground">Kebijakan Privasi</Link>
+                        <Link href="#" className="hover:text-foreground">Kontak Darurat</Link>
+                        <Link href="#" className="hover:text-foreground">Pusat Bantuan</Link>
+                    </div>
+                </footer>
+            </FadeIn>
         </div>
     );
 }

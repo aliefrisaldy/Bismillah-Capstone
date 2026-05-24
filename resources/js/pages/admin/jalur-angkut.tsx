@@ -1,4 +1,13 @@
 import { Head } from '@inertiajs/react';
+import {
+    Layers,
+    Pencil,
+    CheckCircle2,
+    XCircle,
+    ChevronDown,
+    Route,
+} from 'lucide-react';
+import maplibregl from 'maplibre-gl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
@@ -10,15 +19,6 @@ import {
     MarkerTooltip,
     useMap,
 } from '@/components/ui/map';
-import maplibregl from 'maplibre-gl';
-import {
-    Layers,
-    Pencil,
-    CheckCircle2,
-    XCircle,
-    ChevronDown,
-    Route,
-} from 'lucide-react';
 
 type TipeKendaraan = 'Pick Up' | 'Kaisar' | 'R6';
 
@@ -85,8 +85,14 @@ function MapFitBounds({
     const lastKey = useRef('');
 
     useEffect(() => {
-        if (!map || !isLoaded || features.length === 0 || !fitKey) return;
-        if (lastKey.current === fitKey) return;
+        if (!map || !isLoaded || features.length === 0 || !fitKey) {
+return;
+}
+
+        if (lastKey.current === fitKey) {
+return;
+}
+
         lastKey.current = fitKey;
 
         const bounds = new maplibregl.LngLatBounds();
@@ -122,7 +128,10 @@ function JalurGeoJsonLayer({
     onSelectRef.current = onSelect;
 
     const clearHover = useCallback(() => {
-        if (!map || hoveredIdRef.current == null) return;
+        if (!map || hoveredIdRef.current == null) {
+return;
+}
+
         try {
             map.setFeatureState(
                 { source: JALUR_SOURCE, id: hoveredIdRef.current },
@@ -131,6 +140,7 @@ function JalurGeoJsonLayer({
         } catch {
             /* source/layer belum siap */
         }
+
         hoveredIdRef.current = null;
         map.getCanvas().style.cursor = '';
     }, [map]);
@@ -151,7 +161,9 @@ function JalurGeoJsonLayer({
     );
 
     useEffect(() => {
-        if (!map || !isLoaded) return;
+        if (!map || !isLoaded) {
+return;
+}
 
         if (!map.getSource(JALUR_SOURCE)) {
             map.addSource(JALUR_SOURCE, {
@@ -185,17 +197,27 @@ function JalurGeoJsonLayer({
 
         const handleClick = (e: maplibregl.MapLayerMouseEvent) => {
             const hit = e.features?.[0];
-            if (!hit?.properties?.id) return;
+
+            if (!hit?.properties?.id) {
+return;
+}
+
             const id = Number(hit.properties.id);
             const feature = featuresRef.current.find(
                 (f) => f.properties.id === id,
             );
-            if (feature) onSelectRef.current(feature, e.lngLat);
+
+            if (feature) {
+onSelectRef.current(feature, e.lngLat);
+}
         };
 
         const handleEnter = (e: maplibregl.MapLayerMouseEvent) => {
             const hit = e.features?.[0];
-            if (hit?.id == null) return;
+
+            if (hit?.id == null) {
+return;
+}
 
             if (
                 hoveredIdRef.current != null &&
@@ -238,13 +260,22 @@ function JalurGeoJsonLayer({
             map.off('mouseenter', JALUR_LAYER, handleEnter);
             map.off('mouseleave', JALUR_LAYER, handleLeave);
             map.off('mouseout', handleMapLeave);
-            if (map.getLayer(JALUR_LAYER)) map.removeLayer(JALUR_LAYER);
-            if (map.getSource(JALUR_SOURCE)) map.removeSource(JALUR_SOURCE);
+
+            if (map.getLayer(JALUR_LAYER)) {
+map.removeLayer(JALUR_LAYER);
+}
+
+            if (map.getSource(JALUR_SOURCE)) {
+map.removeSource(JALUR_SOURCE);
+}
         };
     }, [map, isLoaded, clearHover]);
 
     useEffect(() => {
-        if (!map || !isLoaded) return;
+        if (!map || !isLoaded) {
+return;
+}
+
         clearHover();
         const src = map.getSource(JALUR_SOURCE) as
             | maplibregl.GeoJSONSource
@@ -270,13 +301,13 @@ function JalurMapPopup({
     const { map, isLoaded } = useMap();
 
     useEffect(() => {
-        if (!map || !isLoaded) return;
+        if (!map || !isLoaded) {
+return;
+}
 
         const el = document.createElement('div');
         const root = createRoot(el);
-        root.render(
-            <JalurPopupCard feature={feature} onEdit={onEdit} />,
-        );
+        root.render(<JalurPopupCard feature={feature} onEdit={onEdit} />);
 
         const popup = new maplibregl.Popup({
             closeButton: true,
@@ -368,7 +399,10 @@ export default function JalurAngkut() {
     const kelurahanDisabled = isKelurahanFilterDisabled(filterTipe);
 
     const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-        if (typeof document === 'undefined') return 'light';
+        if (typeof document === 'undefined') {
+return 'light';
+}
+
         return document.documentElement.classList.contains('dark')
             ? 'dark'
             : 'light';
@@ -386,6 +420,7 @@ export default function JalurAngkut() {
             attributes: true,
             attributeFilter: ['class'],
         });
+
         return () => observer.disconnect();
     }, []);
 
@@ -411,15 +446,23 @@ export default function JalurAngkut() {
     const fetchData = useCallback(async (tipe: string, kelurahan: string) => {
         if (!tipe && !kelurahan) {
             setJalurList([]);
+
             return;
         }
+
         setLoading(true);
+
         try {
             const params = new URLSearchParams();
-            if (tipe) params.set('tipe', tipe);
+
+            if (tipe) {
+params.set('tipe', tipe);
+}
+
             if (kelurahan && tipe === 'Pick Up') {
                 params.set('kelurahan', kelurahan);
             }
+
             const res = await fetch(`/admin/jalur-angkut/data?${params}`);
             const data: JalurFeature[] = await res.json();
             setJalurList(data);
@@ -430,8 +473,7 @@ export default function JalurAngkut() {
         }
     }, []);
 
-    const effectiveKelurahan =
-        filterTipe === 'Pick Up' ? filterKelurahan : '';
+    const effectiveKelurahan = filterTipe === 'Pick Up' ? filterKelurahan : '';
 
     const closePopup = useCallback(() => {
         setPopupJalur(null);
@@ -446,11 +488,14 @@ export default function JalurAngkut() {
         closePopup();
     }, [filterTipe, effectiveKelurahan, closePopup]);
 
-    const startEdit = useCallback((feature: JalurFeature) => {
-        closePopup();
-        setEditingId(feature.properties.id);
-        setEditCoords([...feature.geometry.coordinates]);
-    }, [closePopup]);
+    const startEdit = useCallback(
+        (feature: JalurFeature) => {
+            closePopup();
+            setEditingId(feature.properties.id);
+            setEditCoords([...feature.geometry.coordinates]);
+        },
+        [closePopup],
+    );
 
     const handleJalurSelect = useCallback(
         (feature: JalurFeature, lngLat: maplibregl.LngLat) => {
@@ -466,8 +511,12 @@ export default function JalurAngkut() {
     }, []);
 
     const saveEdit = useCallback(async () => {
-        if (editingId === null || editCoords.length < 2) return;
+        if (editingId === null || editCoords.length < 2) {
+return;
+}
+
         setSaving(true);
+
         try {
             const res = await fetch(`/admin/jalur-angkut/${editingId}`, {
                 method: 'PUT',
@@ -482,7 +531,11 @@ export default function JalurAngkut() {
                 },
                 body: JSON.stringify({ coordinates: editCoords }),
             });
-            if (!res.ok) throw new Error();
+
+            if (!res.ok) {
+throw new Error();
+}
+
             showToast('success', 'Jalur berhasil diperbarui!');
             cancelEdit();
             fetchData(filterTipe, effectiveKelurahan);
@@ -500,10 +553,14 @@ export default function JalurAngkut() {
         effectiveKelurahan,
     ]);
 
-    const updateEditCoord = (index: number, lngLat: { lng: number; lat: number }) => {
+    const updateEditCoord = (
+        index: number,
+        lngLat: { lng: number; lat: number },
+    ) => {
         setEditCoords((prev) => {
             const next = [...prev];
             next[index] = [lngLat.lng, lngLat.lat];
+
             return next;
         });
     };
@@ -512,9 +569,7 @@ export default function JalurAngkut() {
     const countByTipe = (tipe: TipeKendaraan) =>
         jalurList.filter((j) => j.properties.tipe_kendaraan === tipe).length;
 
-    const editingFeature = jalurList.find(
-        (j) => j.properties.id === editingId,
-    );
+    const editingFeature = jalurList.find((j) => j.properties.id === editingId);
     const editWarna = editingFeature?.properties.warna ?? '#f59e0b';
 
     const fitBoundsKey = `${filterTipe}|${effectiveKelurahan}|${jalurList.length}`;
@@ -546,8 +601,7 @@ export default function JalurAngkut() {
                         Manajemen Jalur Angkut
                     </h2>
                     <p className="text-sm text-muted-foreground">
-                        Pilih Tipe Kendaraan untuk menampilkan
-                        jalur di peta
+                        Pilih Tipe Kendaraan untuk menampilkan jalur di peta
                     </p>
                 </div>
 
@@ -557,6 +611,7 @@ export default function JalurAngkut() {
                         (tipe) => {
                             const cfg = TIPE_CONFIG[tipe];
                             const active = filterTipe === tipe;
+
                             return (
                                 <button
                                     key={tipe}
@@ -686,7 +741,7 @@ export default function JalurAngkut() {
                         <div className="absolute inset-0 z-[500] flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm">
                             <Route className="mb-3 h-10 w-10 text-muted-foreground/40" />
                             <p className="text-sm font-semibold text-muted-foreground">
-                                Pilih Tipe Kendaraan 
+                                Pilih Tipe Kendaraan
                             </p>
                             <p className="mt-1 text-xs text-muted-foreground/60">
                                 untuk menampilkan jalur di peta
@@ -737,27 +792,27 @@ export default function JalurAngkut() {
 
                             {editingId !== null &&
                                 editCoords.map(([lng, lat], idx) => (
-                                <MapMarker
-                                    key={`edit-${idx}`}
-                                    longitude={lng}
-                                    latitude={lat}
-                                    draggable
-                                    onDragEnd={(ll) =>
-                                        updateEditCoord(idx, ll)
-                                    }
-                                >
-                                    <MarkerContent>
-                                        <div
-                                            className="h-3.5 w-3.5 rounded-full border-2 border-white shadow"
-                                            style={{
-                                                backgroundColor: editWarna,
-                                            }}
-                                        />
-                                    </MarkerContent>
-                                    <MarkerTooltip>
-                                        Titik {idx + 1}
-                                    </MarkerTooltip>
-                                </MapMarker>
+                                    <MapMarker
+                                        key={`edit-${idx}`}
+                                        longitude={lng}
+                                        latitude={lat}
+                                        draggable
+                                        onDragEnd={(ll) =>
+                                            updateEditCoord(idx, ll)
+                                        }
+                                    >
+                                        <MarkerContent>
+                                            <div
+                                                className="h-3.5 w-3.5 rounded-full border-2 border-white shadow"
+                                                style={{
+                                                    backgroundColor: editWarna,
+                                                }}
+                                            />
+                                        </MarkerContent>
+                                        <MarkerTooltip>
+                                            Titik {idx + 1}
+                                        </MarkerTooltip>
+                                    </MapMarker>
                                 ))}
 
                             {popupJalur &&

@@ -8,9 +8,5 @@ export default function UserAppLayout({
     breadcrumbs?: BreadcrumbItem[];
     children: React.ReactNode;
 }) {
-    return (
-        <AppUserLayout breadcrumbs={breadcrumbs}>
-            {children}
-        </AppUserLayout>
-    );
+    return <AppUserLayout breadcrumbs={breadcrumbs}>{children}</AppUserLayout>;
 }

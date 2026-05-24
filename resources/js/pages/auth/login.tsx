@@ -145,9 +145,7 @@ export default function Login({
                                 />
                             </svg>
 
-                            <span>
-                                Masuk Dengan Akun Google Anda
-                            </span>
+                            <span>Masuk Dengan Akun Google Anda</span>
                         </a>
 
                         {/* Register Link */}

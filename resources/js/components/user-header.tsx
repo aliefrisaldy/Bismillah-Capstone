@@ -59,7 +59,6 @@ export function UserHeader({ breadcrumbs = [] }: Props) {
         <>
             <div className="border-b border-sidebar-border/80">
                 <div className="mx-auto flex h-16 items-center px-4 md:max-w-7xl">
-
                     {/* Mobile Menu */}
                     <div className="lg:hidden">
                         <Sheet>
@@ -159,19 +158,22 @@ export function UserHeader({ breadcrumbs = [] }: Props) {
                                             alt={(auth as any).user?.name}
                                         />
                                         <AvatarFallback className="rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white">
-                                            {getInitials((auth as any).user?.name ?? '')}
+                                            {getInitials(
+                                                (auth as any).user?.name ?? '',
+                                            )}
                                         </AvatarFallback>
                                     </Avatar>
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-56" align="end">
                                 {(auth as any).user && (
-                                    <UserMenuContent user={(auth as any).user} />
+                                    <UserMenuContent
+                                        user={(auth as any).user}
+                                    />
                                 )}
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
-
                 </div>
             </div>
 

@@ -1,14 +1,4 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import {
     Route,
     Truck,
@@ -23,6 +13,17 @@ import {
     Eye,
     Pencil,
 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState  } from 'react';
+import type {ReactNode} from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { formatJadwalLabel, normalizeJadwal } from '@/lib/jalur-schedule';
 
 const FadeIn = ({
@@ -45,16 +46,25 @@ const FadeIn = ({
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
                         setIsVisible(true);
-                        if (domRef.current) observer.unobserve(domRef.current);
+
+                        if (domRef.current) {
+observer.unobserve(domRef.current);
+}
                     }
                 });
             },
             { threshold: 0.1 },
         );
         const currentRef = domRef.current;
-        if (currentRef) observer.observe(currentRef);
+
+        if (currentRef) {
+observer.observe(currentRef);
+}
+
         return () => {
-            if (currentRef) observer.unobserve(currentRef);
+            if (currentRef) {
+observer.unobserve(currentRef);
+}
         };
     }, []);
 
@@ -195,10 +205,23 @@ const aktifFilterOptions = [
 
 function buildQuery(filters: Filters) {
     const q: Record<string, string> = {};
-    if (filters.q) q.q = filters.q;
-    if (filters.tipe) q.tipe = filters.tipe;
-    if (filters.kelurahan) q.kelurahan = filters.kelurahan;
-    if (filters.aktif) q.aktif = filters.aktif;
+
+    if (filters.q) {
+q.q = filters.q;
+}
+
+    if (filters.tipe) {
+q.tipe = filters.tipe;
+}
+
+    if (filters.kelurahan) {
+q.kelurahan = filters.kelurahan;
+}
+
+    if (filters.aktif) {
+q.aktif = filters.aktif;
+}
+
     return q;
 }
 
@@ -228,7 +251,10 @@ export default function AdminJalurIndex({
 
     useEffect(() => {
         const serialized = JSON.stringify(buildQuery(activeFilters));
-        if (serialized === lastSerializedRef.current) return;
+
+        if (serialized === lastSerializedRef.current) {
+return;
+}
 
         const t = setTimeout(() => {
             lastSerializedRef.current = serialized;
@@ -301,8 +327,11 @@ export default function AdminJalurIndex({
     };
 
     const goToPage = (url: string) => {
-        const page = new URL(url, window.location.origin).searchParams.get('page');
+        const page = new URL(url, window.location.origin).searchParams.get(
+            'page',
+        );
         const query: Record<string, string> = { ...buildQuery(activeFilters) };
+
         if (page) {
             query.page = page;
         }
@@ -324,6 +353,7 @@ export default function AdminJalurIndex({
 
     const toggleAktif = async (id: number) => {
         setTogglingId(id);
+
         try {
             const res = await fetch(`/admin/jalur-angkut/${id}/toggle`, {
                 method: 'PATCH',
@@ -337,7 +367,11 @@ export default function AdminJalurIndex({
                         )?.content ?? '',
                 },
             });
-            if (!res.ok) throw new Error();
+
+            if (!res.ok) {
+throw new Error();
+}
+
             router.reload({ only: ['jalur', 'stats'] });
         } catch {
             console.error('Gagal mengubah status jalur');
@@ -360,13 +394,13 @@ export default function AdminJalurIndex({
                                     <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                                 </span>
                                 <span className="text-xs font-bold tracking-wider text-emerald-700 uppercase dark:text-emerald-400">
-                                    Data jalur angkut
+                                    Pakagasa-Data jalur angkutan
                                 </span>
                             </div>
                         </FadeIn>
                         <FadeIn delay={200}>
-                            <h1 className="text-4xl leading-tight font-extrabold tracking-tight text-foreground md:text-5xl">
-                                Manajemen Jalur Angkut
+                            <h1 className="text-3xl leading-tight font-extrabold tracking-tight text-foreground md:text-5xl">
+                                Manajemen Jalur Angkutan Sampah
                             </h1>
                         </FadeIn>
                         <FadeIn delay={300}>
@@ -376,7 +410,6 @@ export default function AdminJalurIndex({
                             </p>
                         </FadeIn>
                     </div>
-
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
@@ -396,6 +429,7 @@ export default function AdminJalurIndex({
                                         {card.label}
                                     </p>
                                 </div>
+                                <div className="pointer-events-none absolute -top-8 -right-8 h-24 w-24 rounded-full bg-emerald-500/5 blur-2xl transition-opacity group-hover:opacity-90" />
                             </div>
                         </FadeIn>
                     ))}
@@ -422,7 +456,8 @@ export default function AdminJalurIndex({
                                             )}
                                         </div>
                                         <p className="text-xs text-muted-foreground">
-                                            Perubahan filter diterapkan otomatis.
+                                            Perubahan filter diterapkan
+                                            otomatis.
                                         </p>
                                     </div>
                                 </div>
@@ -433,7 +468,7 @@ export default function AdminJalurIndex({
                                     onClick={resetFilters}
                                 >
                                     <RotateCcw className="h-4 w-4" />
-                                    Reset
+                                    Reset Filter
                                 </Button>
                             </div>
 
@@ -446,7 +481,9 @@ export default function AdminJalurIndex({
                                         <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                         <Input
                                             value={q}
-                                            onChange={(e) => setQ(e.target.value)}
+                                            onChange={(e) =>
+                                                setQ(e.target.value)
+                                            }
                                             placeholder="Cari ID, nama jalur, atau kelurahan…"
                                             className="h-11 pl-9"
                                         />
@@ -491,7 +528,9 @@ export default function AdminJalurIndex({
                                         Kelurahan
                                     </label>
                                     <Select
-                                        value={kelurahan || KELURAHAN_FILTER_ALL}
+                                        value={
+                                            kelurahan || KELURAHAN_FILTER_ALL
+                                        }
                                         onValueChange={(v) =>
                                             setKelurahan(
                                                 v === KELURAHAN_FILTER_ALL
@@ -565,43 +604,68 @@ export default function AdminJalurIndex({
                         <div className="overflow-x-auto" aria-busy="true">
                             <table className="w-full text-sm">
                                 <thead>
-                                    <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                                        <th className="pr-4 pb-3 font-medium">ID</th>
-                                        <th className="pr-4 pb-3 font-medium">Nama</th>
-                                        <th className="pr-4 pb-3 font-medium">Kelurahan</th>
-                                        <th className="pr-4 pb-3 font-medium">Tipe</th>
-                                        <th className="pr-4 pb-3 font-medium">Titik</th>
-                                        <th className="pr-4 pb-3 font-medium">Jadwal</th>
-                                        <th className="pr-4 pb-3 font-medium">Status</th>
-                                        <th className="pb-3 text-right font-medium">Aksi</th>
+                                    <tr className="border-b border-border text-xs text-muted-foreground">
+                                        <th className="pb-3 text-center font-medium">
+                                            ID
+                                        </th>
+                                        <th className="pb-3 text-center font-medium">
+                                            Nama
+                                        </th>
+                                        <th className="pb-3 text-center font-medium">
+                                            Kelurahan
+                                        </th>
+                                        <th className="pb-3 text-center font-medium">
+                                            Tipe
+                                        </th>
+                                        <th className="pb-3 text-center font-medium">
+                                            Titik
+                                        </th>
+                                        <th className="pb-3 text-center font-medium">
+                                            Jadwal
+                                        </th>
+                                        <th className="pb-3 text-center font-medium">
+                                            Diperbarui
+                                        </th>
+                                        <th className="pb-3 text-center font-medium">
+                                            Status
+                                        </th>
+                                        <th className="pb-3 text-center font-medium">
+                                            Aksi
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {skeletonRows.map((k) => (
-                                        <tr key={k} className="animate-pulse border-b border-border">
-                                            <td className="py-3 pr-4">
-                                                <div className="h-4 w-16 rounded bg-muted/70" />
+                                        <tr
+                                            key={k}
+                                            className="animate-pulse border-b border-border"
+                                        >
+                                            <td className="py-3 text-center">
+                                                <div className="mx-auto h-4 w-16 rounded bg-muted/70" />
                                             </td>
-                                            <td className="py-3 pr-4">
-                                                <div className="h-4 w-40 rounded bg-muted/70" />
+                                            <td className="py-3 text-center">
+                                                <div className="mx-auto h-4 w-40 rounded bg-muted/70" />
                                             </td>
-                                            <td className="py-3 pr-4">
-                                                <div className="h-4 w-28 rounded bg-muted/70" />
+                                            <td className="py-3 text-center">
+                                                <div className="mx-auto h-4 w-28 rounded bg-muted/70" />
                                             </td>
-                                            <td className="py-3 pr-4">
-                                                <div className="h-5 w-20 rounded-full bg-muted/70" />
+                                            <td className="py-3 text-center">
+                                                <div className="mx-auto h-5 w-20 rounded-full bg-muted/70" />
                                             </td>
-                                            <td className="py-3 pr-4">
-                                                <div className="h-4 w-10 rounded bg-muted/70" />
+                                            <td className="py-3 text-center">
+                                                <div className="mx-auto h-4 w-10 rounded bg-muted/70" />
                                             </td>
-                                            <td className="py-3 pr-4">
-                                                <div className="h-4 w-32 rounded bg-muted/70" />
+                                            <td className="py-3 text-center">
+                                                <div className="mx-auto h-4 w-32 rounded bg-muted/70" />
                                             </td>
-                                            <td className="py-3 pr-4">
-                                                <div className="h-5 w-16 rounded-full bg-muted/70" />
+                                            <td className="py-3 text-center">
+                                                <div className="mx-auto h-4 w-24 rounded bg-muted/70" />
                                             </td>
-                                            <td className="py-3 text-right">
-                                                <div className="ml-auto h-8 w-8 rounded-md bg-muted/70" />
+                                            <td className="py-3 text-center">
+                                                <div className="mx-auto h-5 w-16 rounded-full bg-muted/70" />
+                                            </td>
+                                            <td className="py-3 text-center">
+                                                <div className="mx-auto h-8 w-8 rounded-md bg-muted/70" />
                                             </td>
                                         </tr>
                                     ))}
@@ -626,34 +690,51 @@ export default function AdminJalurIndex({
                             <div className="overflow-x-auto">
                                 <table className="w-full text-sm">
                                     <thead>
-                                        <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                                            <th className="pr-4 pb-3 font-medium">ID</th>
-                                            <th className="pr-4 pb-3 font-medium">Nama</th>
-                                            <th className="pr-4 pb-3 font-medium">Kelurahan</th>
-                                            <th className="pr-4 pb-3 font-medium">Tipe</th>
-                                            <th className="pr-4 pb-3 font-medium">Titik</th>
-                                            <th className="pr-4 pb-3 font-medium">Jadwal</th>
-                                            <th className="pr-4 pb-3 font-medium">Diperbarui</th>
-                                            <th className="pr-4 pb-3 font-medium">Status</th>
-                                            <th className="pb-3 text-right font-medium">Aksi</th>
+                                        <tr className="border-b border-border text-xs text-muted-foreground">
+                                            <th className="pb-3 text-center font-medium">
+                                                ID
+                                            </th>
+                                            <th className="pb-3 text-center font-medium">
+                                                Nama
+                                            </th>
+                                            <th className="pb-3 text-center font-medium">
+                                                Kelurahan
+                                            </th>
+                                            <th className="pb-3 text-center font-medium">
+                                                Tipe
+                                            </th>
+                                            <th className="pb-3 text-center font-medium">
+                                                Titik
+                                            </th>
+                                            <th className="pb-3 text-center font-medium">
+                                                Jadwal
+                                            </th>
+                                            <th className="pb-3 text-center font-medium">
+                                                Diperbarui
+                                            </th>
+                                            <th className="pb-3 text-center font-medium">
+                                                Status
+                                            </th>
+                                            <th className="pb-3 text-center font-medium">
+                                                Aksi
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-border">
                                         {jalur.data.map((item) => {
                                             const cfg =
-                                                tipeConfig[
-                                                    item.tipe_kendaraan
-                                                ];
+                                                tipeConfig[item.tipe_kendaraan];
+
                                             return (
                                                 <tr
                                                     key={item.id_jalur_angkut}
                                                     className="group transition-colors hover:bg-muted/40"
                                                 >
-                                                    <td className="py-3 pr-4 font-mono text-xs text-emerald-700 dark:text-emerald-300">
+                                                    <td className="py-3 text-center font-mono text-xs text-emerald-700 dark:text-emerald-300">
                                                         #{item.id_jalur_angkut}
                                                     </td>
-                                                    <td className="max-w-[220px] py-3 pr-4">
-                                                        <div className="flex items-center gap-2">
+                                                    <td className="py-3 text-center">
+                                                        <div className="inline-flex items-center gap-2">
                                                             <span
                                                                 className="h-2.5 w-2.5 shrink-0 rounded-full"
                                                                 style={{
@@ -666,10 +747,10 @@ export default function AdminJalurIndex({
                                                             </p>
                                                         </div>
                                                     </td>
-                                                    <td className="py-3 pr-4 text-muted-foreground">
+                                                    <td className="py-3 text-center text-muted-foreground">
                                                         {item.kelurahan ?? '—'}
                                                     </td>
-                                                    <td className="py-3 pr-4">
+                                                    <td className="py-3 text-center">
                                                         <span
                                                             className={`rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wider ${cfg?.pill ?? ''}`}
                                                         >
@@ -677,10 +758,10 @@ export default function AdminJalurIndex({
                                                                 item.tipe_kendaraan}
                                                         </span>
                                                     </td>
-                                                    <td className="py-3 pr-4 tabular-nums text-muted-foreground">
+                                                    <td className="py-3 text-center text-muted-foreground tabular-nums">
                                                         {item.titik_count}
                                                     </td>
-                                                    <td className="max-w-[180px] py-3 pr-4">
+                                                    <td className="py-3 text-center">
                                                         <p className="truncate text-xs text-muted-foreground">
                                                             {formatJadwalLabel(
                                                                 normalizeJadwal(
@@ -689,10 +770,10 @@ export default function AdminJalurIndex({
                                                             )}
                                                         </p>
                                                     </td>
-                                                    <td className="py-3 pr-4 text-xs text-muted-foreground">
+                                                    <td className="py-3 text-center text-xs text-muted-foreground">
                                                         {item.updated_at ?? '—'}
                                                     </td>
-                                                    <td className="py-3 pr-4">
+                                                    <td className="py-3 text-center">
                                                         <span
                                                             className={`rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wider ${
                                                                 item.aktif
@@ -705,19 +786,19 @@ export default function AdminJalurIndex({
                                                                 : 'NONAKTIF'}
                                                         </span>
                                                     </td>
-                                                    <td className="py-3 text-right">
-                                                        <div className="flex items-center justify-end gap-0.5">
+                                                    <td className="py-3 text-center">
+                                                        <div className="inline-flex items-center gap-0.5">
                                                             <Link
                                                                 href={`/admin/jalur/${item.id_jalur_angkut}`}
                                                                 className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                                                                title="Lihat detail"
+                                                                title="Lihat Detail"
                                                             >
                                                                 <Eye className="h-4 w-4" />
                                                             </Link>
                                                             <Link
                                                                 href={`/admin/jalur/${item.id_jalur_angkut}/edit`}
                                                                 className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                                                                title="Edit jadwal"
+                                                                title="Edit Jalur"
                                                             >
                                                                 <Pencil className="h-4 w-4" />
                                                             </Link>

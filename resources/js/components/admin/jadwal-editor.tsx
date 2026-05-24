@@ -1,10 +1,11 @@
+import { Clock } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import {
-    HARI_LIST,
-    type HariValue,
-    type JadwalItem,
+    HARI_LIST
+    
+    
 } from '@/lib/jalur-schedule';
-import { Clock } from 'lucide-react';
+import type {HariValue, JadwalItem} from '@/lib/jalur-schedule';
 
 type Props = {
     value: JadwalItem[];
@@ -21,8 +22,10 @@ export function JadwalEditor({ value, onChange, errors }: Props) {
     const toggleHari = (hari: HariValue) => {
         if (activeHari.has(hari)) {
             onChange(value.filter((j) => j.hari !== hari));
+
             return;
         }
+
         onChange([
             ...value,
             {
@@ -39,9 +42,7 @@ export function JadwalEditor({ value, onChange, errors }: Props) {
         jam: string,
     ) => {
         onChange(
-            value.map((j) =>
-                j.hari === hari ? { ...j, [field]: jam } : j,
-            ),
+            value.map((j) => (j.hari === hari ? { ...j, [field]: jam } : j)),
         );
     };
 
@@ -60,6 +61,7 @@ export function JadwalEditor({ value, onChange, errors }: Props) {
             <div className="flex flex-wrap gap-2">
                 {HARI_LIST.map((hari) => {
                     const active = activeHari.has(hari.value);
+
                     return (
                         <button
                             key={hari.value}
@@ -99,7 +101,10 @@ export function JadwalEditor({ value, onChange, errors }: Props) {
                             const slot = value.find(
                                 (j) => j.hari === hari.value,
                             );
-                            if (!slot) return null;
+
+                            if (!slot) {
+return null;
+}
 
                             const idx = value.findIndex(
                                 (j) => j.hari === hari.value,

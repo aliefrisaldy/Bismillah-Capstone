@@ -19,16 +19,20 @@ export default function AdminLogin() {
         const form = e.currentTarget;
         const formData = new FormData(form);
 
-        router.post('/admin/login', {
-            email: formData.get('email'),
-            password: formData.get('password'),
-        }, {
-            onError: (err) => {
-                setErrors(err);
-                setProcessing(false);
+        router.post(
+            '/admin/login',
+            {
+                email: formData.get('email'),
+                password: formData.get('password'),
             },
-            onFinish: () => setProcessing(false),
-        });
+            {
+                onError: (err) => {
+                    setErrors(err);
+                    setProcessing(false);
+                },
+                onFinish: () => setProcessing(false),
+            },
+        );
     };
 
     return (
@@ -37,7 +41,6 @@ export default function AdminLogin() {
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
                 <div className="grid gap-6">
-
                     <div className="grid gap-2">
                         <Label htmlFor="email">Email</Label>
                         <Input
@@ -75,11 +78,11 @@ export default function AdminLogin() {
                         {processing && <Spinner className="mr-2" />}
                         Masuk ke Portal
                     </Button>
-
                 </div>
 
                 <p className="text-center text-xs text-muted-foreground">
-                    Akses ini hanya untuk petugas resmi<br />
+                    Akses ini hanya untuk petugas resmi
+                    <br />
                     Dinas Lingkungan Hidup Kota Palu.
                 </p>
             </form>

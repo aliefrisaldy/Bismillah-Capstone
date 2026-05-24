@@ -173,9 +173,7 @@ export default function Register({ status }: Props) {
                                 />
                             </svg>
 
-                            <span >
-                                Daftar Dengan Akun Google Anda
-                            </span>
+                            <span>Daftar Dengan Akun Google Anda</span>
                         </a>
 
                         {/* Login Link */}

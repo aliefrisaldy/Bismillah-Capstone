@@ -15,8 +15,8 @@ class LaporanController extends Controller
     {
         $laporan = Laporan::where('id_user', Auth::id())
             ->orderByDesc('tanggal_laporan')
-            ->get()
-            ->map(fn($item) => [
+            ->paginate(3)
+            ->through(fn($item) => [
                 'id_laporan' => $item->id_laporan,
                 'deskripsi' => $item->deskripsi,
                 'foto' => $item->foto,

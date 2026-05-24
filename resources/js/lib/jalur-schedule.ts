@@ -27,19 +27,30 @@ export function isHariValue(value: string): value is HariValue {
 }
 
 export function normalizeJadwal(raw: unknown): JadwalItem[] {
-    if (!Array.isArray(raw)) return [];
+    if (!Array.isArray(raw)) {
+return [];
+}
 
     const items: JadwalItem[] = [];
 
     for (const entry of raw) {
-        if (!entry || typeof entry !== 'object') continue;
+        if (!entry || typeof entry !== 'object') {
+continue;
+}
+
         const row = entry as Record<string, unknown>;
         const hari = String(row.hari ?? '');
-        if (!isHariValue(hari)) continue;
+
+        if (!isHariValue(hari)) {
+continue;
+}
 
         const jam_mulai = String(row.jam_mulai ?? '').slice(0, 5);
         const jam_selesai = String(row.jam_selesai ?? '').slice(0, 5);
-        if (!jam_mulai || !jam_selesai) continue;
+
+        if (!jam_mulai || !jam_selesai) {
+continue;
+}
 
         items.push({ hari, jam_mulai, jam_selesai });
     }
@@ -49,15 +60,17 @@ export function normalizeJadwal(raw: unknown): JadwalItem[] {
     );
 }
 
-export function formatJadwalLabel(jadwal: JadwalItem[] | null | undefined): string {
+export function formatJadwalLabel(
+    jadwal: JadwalItem[] | null | undefined,
+): string {
     const list = normalizeJadwal(jadwal);
-    if (!list.length) return 'Belum dijadwalkan';
+
+    if (!list.length) {
+return 'Belum dijadwalkan';
+}
 
     return list
-        .map(
-            (j) =>
-                `${hariLabelMap[j.hari]} ${j.jam_mulai}–${j.jam_selesai}`,
-        )
+        .map((j) => `${hariLabelMap[j.hari]} ${j.jam_mulai}–${j.jam_selesai}`)
         .join(' · ');
 }
 

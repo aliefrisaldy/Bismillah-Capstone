@@ -57,7 +57,7 @@ class LaporanController extends Controller
             'ditolak' => Laporan::where('status', 'ditolak')->count(),
         ] : null;
 
-        $laporan = $query->paginate(10)->through(fn($item) => [
+        $laporan = $query->paginate(6)->through(fn($item) => [
             'id_laporan' => $item->id_laporan,
             'foto' => $item->foto,
             'deskripsi' => $item->deskripsi,

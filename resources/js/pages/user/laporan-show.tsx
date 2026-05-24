@@ -1,16 +1,11 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ReactNode, useEffect, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { UserMenuContent } from '@/components/user-menu-content';
-import { useInitials } from '@/hooks/use-initials';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import {
     ArrowLeft,
     Printer,
@@ -18,17 +13,14 @@ import {
     CalendarDays,
     Crosshair,
     User,
-    ClipboardList,
     CircleDot,
 } from 'lucide-react';
+import type { ReactNode} from 'react';
+import { useEffect, useState } from 'react';
 import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+import FadeIn from '@/components/fade-in';
+import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -36,63 +28,6 @@ L.Icon.Default.mergeOptions({
     iconRetinaUrl: markerIcon2x,
     shadowUrl: markerShadow,
 });
-
-// ── FadeIn Component (konsisten dengan halaman lain) ───────
-const FadeIn = ({
-    children,
-    delay = 0,
-    direction = 'up',
-    className = '',
-}: {
-    children: ReactNode;
-    delay?: number;
-    direction?: 'up' | 'down' | 'left' | 'right' | 'none';
-    className?: string;
-}) => {
-    const [isVisible, setIsVisible] = useState(false);
-    const domRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        setIsVisible(true);
-                        if (domRef.current) observer.unobserve(domRef.current);
-                    }
-                });
-            },
-            { threshold: 0.1 },
-        );
-        const currentRef = domRef.current;
-        if (currentRef) observer.observe(currentRef);
-        return () => {
-            if (currentRef) observer.unobserve(currentRef);
-        };
-    }, []);
-
-    const directionClasses = {
-        up: 'translate-y-10',
-        down: '-translate-y-10',
-        left: 'translate-x-10',
-        right: '-translate-x-10',
-        none: 'scale-95',
-    };
-
-    return (
-        <div
-            ref={domRef}
-            className={`transition-all duration-700 ease-out ${className} ${
-                isVisible
-                    ? 'translate-x-0 translate-y-0 scale-100 opacity-100'
-                    : `opacity-0 ${directionClasses[direction]}`
-            }`}
-            style={{ transitionDelay: `${delay}ms` }}
-        >
-            {children}
-        </div>
-    );
-};
 
 type LaporanStatus =
     | 'menunggu'
@@ -171,12 +106,18 @@ const statusConfig: Record<
 };
 
 function safeDateLabel(input?: string | null) {
-    if (!input) return '-';
-    const d = new Date(input);
-    if (Number.isNaN(d.getTime())) return '-';
-    return format(d, 'EEEE, d MMMM yyyy - HH:mm', { locale: id }) + ' WITA';
+    if (!input) {
+return '-';
 }
 
+    const d = new Date(input);
+
+    if (Number.isNaN(d.getTime())) {
+return '-';
+}
+
+    return format(d, 'EEEE, d MMMM yyyy - HH:mm', { locale: id }) + ' WITA';
+}
 
 const toneToDot: Record<NonNullable<RiwayatItem['tone']>, string> = {
     amber: 'bg-amber-500',
@@ -188,9 +129,16 @@ const toneToDot: Record<NonNullable<RiwayatItem['tone']>, string> = {
 };
 
 function toNumberOrNull(input?: string | number | null): number | null {
-    if (input === null || input === undefined) return null;
-    if (typeof input === 'number') return Number.isFinite(input) ? input : null;
+    if (input === null || input === undefined) {
+return null;
+}
+
+    if (typeof input === 'number') {
+return Number.isFinite(input) ? input : null;
+}
+
     const n = Number(String(input).trim());
+
     return Number.isFinite(n) ? n : null;
 }
 
@@ -203,13 +151,12 @@ function ChangeView({
 }) {
     const map = useMap();
     map.setView(center, zoom);
+
     return null;
 }
 
 export default function LaporanShow({ laporan, riwayat }: Props) {
     const { auth } = usePage().props as any;
-    const getInitials = useInitials();
-    const [menuOpen, setMenuOpen] = useState(false);
     const displayId =
         laporan.kode_laporan ??
         `PLC-${String(laporan.id_laporan).padStart(4, '0')}`;
@@ -226,7 +173,8 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
     const buktiImages = (
         Array.isArray(laporan.bukti_pembersihan)
             ? laporan.bukti_pembersihan
-            : typeof laporan.bukti_pembersihan === 'string' && laporan.bukti_pembersihan
+            : typeof laporan.bukti_pembersihan === 'string' &&
+                laporan.bukti_pembersihan
               ? [laporan.bukti_pembersihan]
               : []
     ) as string[];
@@ -255,124 +203,8 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
     }));
 
     return (
-        <div className="min-h-screen bg-background pb-20 font-sans selection:bg-emerald-500/30">
+        <>
             <Head title={`Detail Laporan #${displayId}`} />
-
-            {/* Navbar */}
-            <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 print:hidden">
-                <nav className="flex items-center justify-between px-6 py-4 md:px-12 lg:px-24">
-                    <Link
-                        href="/"
-                        className="text-xl font-bold tracking-tight text-foreground"
-                    >
-                        Civic Ecology Palu
-                    </Link>
-                    <div className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
-                        <Link
-                            href="/"
-                            className="transition-colors duration-200 hover:text-foreground"
-                        >
-                            Home
-                        </Link>
-                        <Link
-                            href="/user/laporan"
-                            className="relative font-semibold text-foreground after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-full after:bg-foreground"
-                        >
-                            Laporan Saya
-                        </Link>
-                        <Link
-                            href="/user/laporan/buat"
-                            className="transition-colors duration-200 hover:text-foreground"
-                        >
-                            Buat Laporan
-                        </Link>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    className="size-10 overflow-hidden rounded-full p-0 ring-2 ring-border transition-all duration-200 hover:ring-foreground/30"
-                                >
-                                    <Avatar className="size-full">
-                                        <AvatarImage
-                                            src={auth?.user?.avatar}
-                                            alt={auth?.user?.name}
-                                        />
-                                        <AvatarFallback className="bg-emerald-800 text-white">
-                                            {getInitials(
-                                                auth?.user?.name ?? '',
-                                            )}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-56" align="end">
-                                {auth?.user && (
-                                    <UserMenuContent user={auth.user} />
-                                )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-
-                        {/* Mobile menu button */}
-                        <button
-                            type="button"
-                            className="inline-flex size-10 items-center justify-center rounded-full border border-border/60 bg-background/60 text-foreground backdrop-blur transition-colors hover:bg-accent md:hidden"
-                            onClick={() => setMenuOpen(!menuOpen)}
-                            aria-label="Toggle menu"
-                        >
-                            <svg
-                                className="h-6 w-6"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                {menuOpen ? (
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                ) : (
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M4 6h16M4 12h16M4 18h16"
-                                    />
-                                )}
-                            </svg>
-                        </button>
-                    </div>
-                </nav>
-
-                {/* Mobile menu (landing page style) */}
-                {menuOpen && (
-                    <div className="flex flex-col gap-4 border-t border-border/50 px-6 py-4 md:hidden">
-                        <Link
-                            href="/"
-                            className="text-sm text-muted-foreground"
-                        >
-                            Home
-                        </Link>
-                        <Link
-                            href="/user/laporan"
-                            className="text-sm font-semibold text-foreground"
-                        >
-                            Laporan Saya
-                        </Link>
-                        <Link
-                            href="/user/laporan/buat"
-                            className="text-sm text-muted-foreground"
-                        >
-                            Buat Laporan
-                        </Link>
-                    </div>
-                )}
-            </header>
-
-            <main className="mx-auto mt-8 max-w-6xl px-6 md:px-12 lg:mt-10">
                 {/* Breadcrumb + Heading */}
                 <FadeIn delay={100}>
                     <div className="mb-8">
@@ -603,7 +435,8 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                                         </FadeIn>
                                     ) : null}
 
-                                    {laporan.status === 'selesai' && buktiImages.length > 0 ? (
+                                    {laporan.status === 'selesai' &&
+                                    buktiImages.length > 0 ? (
                                         <FadeIn
                                             delay={hasCoords ? 620 : 560}
                                             direction="up"
@@ -613,14 +446,16 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                                                     Bukti Pembersihan
                                                 </h2>
                                                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                                                    Dokumentasi lokasi setelah penanganan oleh petugas.
+                                                    Dokumentasi lokasi setelah
+                                                    penanganan oleh petugas.
                                                 </p>
                                                 <div className="mt-4 space-y-3">
                                                     <button
                                                         type="button"
                                                         onClick={() =>
                                                             setActiveImage(
-                                                                selectedBukti ?? buktiImages[0],
+                                                                selectedBukti ??
+                                                                    buktiImages[0],
                                                             )
                                                         }
                                                         className="block w-full overflow-hidden rounded-2xl border border-border"
@@ -636,26 +471,34 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                                                         <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
                                                             {buktiImages
                                                                 .slice(0, 12)
-                                                                .map((img, idx) => (
-                                                                    <button
-                                                                        key={`${img}-${idx}`}
-                                                                        type="button"
-                                                                        onClick={() =>
-                                                                            setSelectedBukti(img)
-                                                                        }
-                                                                        className={`overflow-hidden rounded-xl border ${
-                                                                            img === selectedBukti
-                                                                                ? 'border-emerald-500 ring-2 ring-emerald-500/30'
-                                                                                : 'border-border'
-                                                                        }`}
-                                                                    >
-                                                                        <img
-                                                                            src={`/storage/${img}`}
-                                                                            alt={`Bukti ${idx + 1}`}
-                                                                            className="h-14 w-full object-cover sm:h-16"
-                                                                        />
-                                                                    </button>
-                                                                ))}
+                                                                .map(
+                                                                    (
+                                                                        img,
+                                                                        idx,
+                                                                    ) => (
+                                                                        <button
+                                                                            key={`${img}-${idx}`}
+                                                                            type="button"
+                                                                            onClick={() =>
+                                                                                setSelectedBukti(
+                                                                                    img,
+                                                                                )
+                                                                            }
+                                                                            className={`overflow-hidden rounded-xl border ${
+                                                                                img ===
+                                                                                selectedBukti
+                                                                                    ? 'border-emerald-500 ring-2 ring-emerald-500/30'
+                                                                                    : 'border-border'
+                                                                            }`}
+                                                                        >
+                                                                            <img
+                                                                                src={`/storage/${img}`}
+                                                                                alt={`Bukti ${idx + 1}`}
+                                                                                className="h-14 w-full object-cover sm:h-16"
+                                                                            />
+                                                                        </button>
+                                                                    ),
+                                                                )}
                                                         </div>
                                                     ) : null}
                                                 </div>
@@ -670,7 +513,9 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                     <Dialog
                         open={!!activeImage}
                         onOpenChange={(open) => {
-                            if (!open) setActiveImage(null);
+                            if (!open) {
+setActiveImage(null);
+}
                         }}
                     >
                         <DialogContent className="max-w-5xl p-0">
@@ -791,36 +636,9 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                         </FadeIn>
                     </div>
                 </div>
-            </main>
-
-            {/* Footer */}
-            <FadeIn delay={100}>
-                <footer className="mx-auto mt-24 flex max-w-6xl flex-col items-center justify-between gap-4 border-t border-border px-6 pt-8 md:flex-row md:px-12">
-                    <div>
-                        <h4 className="mb-1 font-bold text-foreground">
-                            Civic Ecology Palu
-                        </h4>
-                        <p className="text-xs text-muted-foreground">
-                            © {new Date().getFullYear()} Pemerintah Kota Palu -
-                            Dinas Lingkungan Hidup. Digital Arboretum
-                            Initiative.
-                        </p>
-                    </div>
-                    <div className="flex gap-6 text-sm font-medium text-muted-foreground">
-                        <Link href="#" className="hover:text-foreground">
-                            Kebijakan Privasi
-                        </Link>
-                        <Link href="#" className="hover:text-foreground">
-                            Kontak Darurat
-                        </Link>
-                        <Link href="#" className="hover:text-foreground">
-                            Pusat Bantuan
-                        </Link>
-                    </div>
-                </footer>
-            </FadeIn>
-        </div>
+        </>
     );
 }
 
-LaporanShow.layout = null;
+import UserLayout from '@/layouts/user-layout';
+LaporanShow.layout = (page: ReactNode) => <UserLayout>{page}</UserLayout>;

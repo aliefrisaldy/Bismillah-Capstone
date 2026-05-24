@@ -1,13 +1,4 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-    Map,
-    MapControls,
-    MapRoute,
-    useMap,
-} from '@/components/ui/map';
-import maplibregl from 'maplibre-gl';
 import {
     ArrowLeft,
     Pencil,
@@ -17,12 +8,17 @@ import {
     CalendarClock,
     ChevronRight,
 } from 'lucide-react';
+import maplibregl from 'maplibre-gl';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Map, MapControls, MapRoute, useMap } from '@/components/ui/map';
 import {
     formatJadwalLabel,
     getHariLabel,
-    normalizeJadwal,
-    type JadwalItem,
+    normalizeJadwal
+    
 } from '@/lib/jalur-schedule';
+import type {JadwalItem} from '@/lib/jalur-schedule';
 
 type TipeKendaraan = 'Pick Up' | 'Kaisar' | 'R6';
 
@@ -61,20 +57,20 @@ const tipeConfig: Record<TipeKendaraan, { label: string; pill: string }> = {
     },
 };
 
-function RouteFitBounds({
-    coordinates,
-}: {
-    coordinates: [number, number][];
-}) {
+function RouteFitBounds({ coordinates }: { coordinates: [number, number][] }) {
     const { map, isLoaded } = useMap();
     const done = useRef(false);
 
     useEffect(() => {
-        if (!map || !isLoaded || coordinates.length < 2 || done.current) return;
+        if (!map || !isLoaded || coordinates.length < 2 || done.current) {
+return;
+}
+
         done.current = true;
 
         const bounds = new maplibregl.LngLatBounds();
         coordinates.forEach(([lng, lat]) => bounds.extend([lng, lat]));
+
         if (!bounds.isEmpty()) {
             map.fitBounds(bounds, { padding: 48, maxZoom: 15, duration: 500 });
         }
@@ -113,6 +109,7 @@ export default function AdminJalurShow({ jalur }: Props) {
             attributes: true,
             attributeFilter: ['class'],
         });
+
         return () => observer.disconnect();
     }, []);
 
@@ -144,8 +141,13 @@ export default function AdminJalurShow({ jalur }: Props) {
                         </div>
                     </div>
 
-                    <Button asChild className="gap-2 bg-emerald-700 hover:bg-emerald-800">
-                        <Link href={`/admin/jalur/${jalur.id_jalur_angkut}/edit`}>
+                    <Button
+                        asChild
+                        className="gap-2 bg-emerald-700 hover:bg-emerald-800"
+                    >
+                        <Link
+                            href={`/admin/jalur/${jalur.id_jalur_angkut}/edit`}
+                        >
                             <Pencil className="h-4 w-4" />
                             Edit Jalur
                         </Link>
@@ -223,7 +225,9 @@ export default function AdminJalurShow({ jalur }: Props) {
                         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                             <div className="mb-4 flex items-center gap-2">
                                 <CalendarClock className="h-5 w-5 text-emerald-600" />
-                                <h2 className="text-lg font-bold">Jadwal Operasi</h2>
+                                <h2 className="text-lg font-bold">
+                                    Jadwal Operasi
+                                </h2>
                             </div>
 
                             {jadwal.length === 0 ? (
@@ -262,7 +266,9 @@ export default function AdminJalurShow({ jalur }: Props) {
 
                     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm lg:col-span-3">
                         <div className="border-b border-border px-4 py-3">
-                            <p className="text-sm font-semibold">Pratinjau Rute</p>
+                            <p className="text-sm font-semibold">
+                                Pratinjau Rute
+                            </p>
                             <p className="text-xs text-muted-foreground">
                                 Visualisasi jalur di peta
                             </p>

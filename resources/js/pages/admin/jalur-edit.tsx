@@ -1,4 +1,6 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { ArrowLeft, ChevronRight, Loader2, Save } from 'lucide-react';
+import { JadwalEditor } from '@/components/admin/jadwal-editor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,17 +11,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { JadwalEditor } from '@/components/admin/jadwal-editor';
-import {
-    normalizeJadwal,
-    type JadwalItem,
-} from '@/lib/jalur-schedule';
-import {
-    ArrowLeft,
-    ChevronRight,
-    Loader2,
-    Save,
-} from 'lucide-react';
+import { normalizeJadwal  } from '@/lib/jalur-schedule';
+import type {JadwalItem} from '@/lib/jalur-schedule';
 
 type TipeKendaraan = 'Pick Up' | 'Kaisar' | 'R6';
 
@@ -62,7 +55,7 @@ export default function AdminJalurEdit({ jalur }: Props) {
             <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-3">
-                        <Link href={`/admin/jalur/${jalur.id_jalur_angkut}`}>
+                        <Link href={`/admin/jalur`}>
                             <Button variant="ghost" className="gap-2">
                                 <ArrowLeft className="h-4 w-4" />
                                 Kembali
@@ -78,7 +71,10 @@ export default function AdminJalurEdit({ jalur }: Props) {
                     </div>
                 </div>
 
-                <form onSubmit={submit} className="mx-auto w-full max-w-3xl space-y-6">
+                <form
+                    onSubmit={submit}
+                    className="mx-auto w-full max-w-3xl space-y-6"
+                >
                     <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                         <h1 className="text-2xl font-extrabold text-foreground">
                             Edit Jalur Angkut
@@ -119,7 +115,9 @@ export default function AdminJalurEdit({ jalur }: Props) {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="1">Aktif</SelectItem>
-                                        <SelectItem value="0">Nonaktif</SelectItem>
+                                        <SelectItem value="0">
+                                            Nonaktif
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                                 {errors.aktif && (

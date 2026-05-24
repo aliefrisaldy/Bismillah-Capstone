@@ -1,14 +1,4 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import {
     ClipboardList,
     ShieldCheck,
@@ -21,7 +11,21 @@ import {
     Eye,
     SlidersHorizontal,
     RotateCcw,
+    ChevronLeft,
+    ChevronRight,
+    ImageOff,
 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState  } from 'react';
+import type {ReactNode} from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 // ── FadeIn (selaras dengan halaman user /laporan) ─────────
 const FadeIn = ({
@@ -44,16 +48,25 @@ const FadeIn = ({
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
                         setIsVisible(true);
-                        if (domRef.current) observer.unobserve(domRef.current);
+
+                        if (domRef.current) {
+observer.unobserve(domRef.current);
+}
                     }
                 });
             },
             { threshold: 0.1 },
         );
         const currentRef = domRef.current;
-        if (currentRef) observer.observe(currentRef);
+
+        if (currentRef) {
+observer.observe(currentRef);
+}
+
         return () => {
-            if (currentRef) observer.unobserve(currentRef);
+            if (currentRef) {
+observer.unobserve(currentRef);
+}
         };
     }, []);
 
@@ -194,16 +207,30 @@ const statusFilterOptions: {
 
 function buildQuery(filters: Filters) {
     const q: Record<string, string> = {};
-    if (filters.q) q.q = filters.q;
-    if (filters.status) q.status = filters.status;
-    if (filters.dari) q.dari = filters.dari;
-    if (filters.sampai) q.sampai = filters.sampai;
+
+    if (filters.q) {
+q.q = filters.q;
+}
+
+    if (filters.status) {
+q.status = filters.status;
+}
+
+    if (filters.dari) {
+q.dari = filters.dari;
+}
+
+    if (filters.sampai) {
+q.sampai = filters.sampai;
+}
+
     return q;
 }
 
 function toExportUrl(filters: Filters) {
     const params = new URLSearchParams(buildQuery(filters));
     const qs = params.toString();
+
     return qs ? `/admin/laporan/export?${qs}` : '/admin/laporan/export';
 }
 
@@ -227,7 +254,10 @@ export default function AdminLaporanIndex({ stats, laporan, filters }: Props) {
 
     useEffect(() => {
         const serialized = JSON.stringify(buildQuery(activeFilters));
-        if (serialized === lastSerializedRef.current) return;
+
+        if (serialized === lastSerializedRef.current) {
+return;
+}
 
         const t = setTimeout(() => {
             lastSerializedRef.current = serialized;
@@ -303,12 +333,7 @@ export default function AdminLaporanIndex({ stats, laporan, filters }: Props) {
         window.location.href = toExportUrl(activeFilters);
     };
 
-    const skeletonRows = useMemo(
-        () => Array.from({ length: 7 }, (_, i) => i),
-        [],
-    );
-
-    const renderFotoThumb = (foto: LaporanItem['foto']) => {
+    const getFotoSrc = (foto: LaporanItem['foto']): string | null => {
         const path = Array.isArray(foto)
             ? foto[0]
             : typeof foto === 'string'
@@ -316,27 +341,12 @@ export default function AdminLaporanIndex({ stats, laporan, filters }: Props) {
               : null;
 
         if (!path) {
-            return (
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-muted/40 text-[10px] font-semibold text-muted-foreground">
-                    N/A
-                </div>
-            );
-        }
+return null;
+}
 
-        // Cek apakah URL eksternal (dari WA) atau file lokal
-        const src =
-            path.startsWith('http://') || path.startsWith('https://')
-                ? path
-                : `/storage/${path}`;
-
-        return (
-            <img
-                src={src}
-                alt="Foto"
-                className="h-10 w-10 rounded-lg border border-border object-cover"
-                loading="lazy"
-            />
-        );
+        return path.startsWith('http://') || path.startsWith('https://')
+            ? path
+            : `/storage/${path}`;
     };
 
     return (
@@ -344,8 +354,8 @@ export default function AdminLaporanIndex({ stats, laporan, filters }: Props) {
             <Head title="Manajemen Laporan Sampah" />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-6">
-                {/* Hero — ukuran & ritme tipografi selaras halaman user /laporan */}
-                <div className="mb-8 flex flex-col justify-between gap-6 lg:mb-16 lg:flex-row lg:items-end">
+                {/* Hero */}
+                <div className="mb-12 flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
                     <div className="max-w-2xl">
                         <FadeIn delay={100}>
                             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50/80 px-4 py-1.5 dark:border-emerald-800 dark:bg-emerald-900/30">
@@ -354,21 +364,19 @@ export default function AdminLaporanIndex({ stats, laporan, filters }: Props) {
                                     <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                                 </span>
                                 <span className="text-xs font-bold tracking-wider text-emerald-700 uppercase dark:text-emerald-400">
-                                    Panel manajemen aktif
+                                    Pakagasa — Manajemen Laporan
                                 </span>
                             </div>
                         </FadeIn>
                         <FadeIn delay={200}>
-                            <h1 className="text-4xl leading-tight font-extrabold tracking-tight text-foreground md:text-5xl">
-                                Manajemen Laporan{' '}
-                                <br className="hidden md:block" />
-                                Sampah Ilegal
+                            <h1 className="text-xl font-extrabold tracking-tight text-foreground md:text-5xl">
+                                Manajemen Laporan Tempat Sampah Ilegal
                             </h1>
                         </FadeIn>
                         <FadeIn delay={300}>
                             <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
-                                Pantau, verifikasi, dan kelola semua laporan
-                                penumpukan sampah liar secara real-time.
+                                Pantau, verifikasi, dan kelola seluruh laporan
+                                warga secara real-time.
                             </p>
                         </FadeIn>
                     </div>
@@ -442,7 +450,7 @@ export default function AdminLaporanIndex({ stats, laporan, filters }: Props) {
                                         onClick={resetFilters}
                                     >
                                         <RotateCcw className="h-4 w-4" />
-                                        Reset
+                                        Reset Filter
                                     </Button>
                                 </div>
                             </div>
@@ -547,7 +555,7 @@ export default function AdminLaporanIndex({ stats, laporan, filters }: Props) {
                     </div>
                 </FadeIn>
 
-                {/* Table */}
+                {/* Cards */}
                 <div className="flex flex-1 flex-col gap-4 rounded-xl border border-sidebar-border/70 bg-card p-4 md:p-6 dark:border-sidebar-border">
                     <div className="flex items-center justify-between">
                         <h2 className="text-xl font-bold text-foreground">
@@ -560,75 +568,23 @@ export default function AdminLaporanIndex({ stats, laporan, filters }: Props) {
                     </div>
 
                     {isFiltering ? (
-                        <div
-                            className="overflow-x-auto"
-                            aria-busy="true"
-                            aria-live="polite"
-                        >
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                                        <th className="pr-4 pb-3 font-medium">
-                                            ID Laporan
-                                        </th>
-                                        <th className="pr-4 pb-3 font-medium">
-                                            Foto
-                                        </th>
-                                        <th className="pr-4 pb-3 font-medium">
-                                            Tanggal
-                                        </th>
-                                        <th className="pr-4 pb-3 font-medium">
-                                            Lokasi
-                                        </th>
-                                        <th className="pr-4 pb-3 font-medium">
-                                            Pelapor
-                                        </th>
-                                        <th className="pr-4 pb-3 font-medium">
-                                            Status
-                                        </th>
-                                        <th className="pb-3 text-right font-medium">
-                                            Aksi
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border">
-                                    {skeletonRows.map((k) => (
-                                        <tr key={k} className="animate-pulse">
-                                            <td className="py-3 pr-4">
-                                                <div className="h-4 w-28 rounded bg-muted/70" />
-                                            </td>
-                                            <td className="py-3 pr-4">
-                                                <div className="h-10 w-10 rounded-lg bg-muted/70" />
-                                            </td>
-                                            <td className="py-3 pr-4">
-                                                <div className="h-4 w-24 rounded bg-muted/70" />
-                                            </td>
-                                            <td className="max-w-[340px] py-3 pr-4">
-                                                <div className="h-4 w-[260px] max-w-full rounded bg-muted/70" />
-                                                <div className="mt-2 h-3 w-[320px] max-w-full rounded bg-muted/50" />
-                                            </td>
-                                            <td className="py-3 pr-4">
-                                                <div className="h-4 w-32 rounded bg-muted/70" />
-                                            </td>
-                                            <td className="py-3 pr-4">
-                                                <div className="h-5 w-24 rounded-full bg-muted/70" />
-                                            </td>
-                                            <td className="py-3 text-right">
-                                                <div className="ml-auto h-8 w-8 rounded-md bg-muted/70" />
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-
-                            <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
-                                <div className="h-4 w-44 rounded bg-muted/60" />
-                                <div className="flex items-center gap-2">
-                                    <div className="h-8 w-9 rounded-md bg-muted/60" />
-                                    <div className="h-8 w-9 rounded-md bg-muted/60" />
-                                    <div className="h-8 w-9 rounded-md bg-muted/60" />
+                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+                            {Array.from({ length: 6 }, (_, i) => (
+                                <div
+                                    key={i}
+                                    className="animate-pulse overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
+                                >
+                                    <div className="h-44 w-full bg-muted/70" />
+                                    <div className="space-y-3 p-5">
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-5 w-20 rounded-full bg-muted/70" />
+                                            <div className="h-3 w-24 rounded bg-muted/50" />
+                                        </div>
+                                        <div className="h-4 w-full rounded bg-muted/70" />
+                                        <div className="h-3 w-3/4 rounded bg-muted/50" />
+                                    </div>
                                 </div>
-                            </div>
+                            ))}
                         </div>
                     ) : laporan.data.length === 0 ? (
                         <div className="flex flex-1 items-center justify-center py-12 text-center">
@@ -644,99 +600,139 @@ export default function AdminLaporanIndex({ stats, laporan, filters }: Props) {
                         </div>
                     ) : (
                         <>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                                            <th className="pr-4 pb-3 font-medium">
-                                                ID Laporan
-                                            </th>
-                                            <th className="pr-4 pb-3 font-medium">
-                                                Foto
-                                            </th>
-                                            <th className="pr-4 pb-3 font-medium">
-                                                Tanggal
-                                            </th>
-                                            <th className="pr-4 pb-3 font-medium">
-                                                Lokasi
-                                            </th>
-                                            <th className="pr-4 pb-3 font-medium">
-                                                Pelapor
-                                            </th>
-                                            <th className="pr-4 pb-3 font-medium">
-                                                Status
-                                            </th>
-                                            <th className="pb-3 text-right font-medium">
-                                                Aksi
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-border">
-                                        {laporan.data.map((item) => (
-                                            <tr
-                                                key={item.id_laporan}
-                                                className="group transition-colors hover:bg-muted/40"
-                                            >
-                                                <td className="py-3 pr-4 font-mono text-xs text-emerald-700 dark:text-emerald-300">
-                                                    #REP-
-                                                    {String(
-                                                        item.id_laporan,
-                                                    ).padStart(5, '0')}
-                                                </td>
-                                                <td className="py-3 pr-4">
-                                                    {renderFotoThumb(item.foto)}
-                                                </td>
-                                                <td className="py-3 pr-4 text-xs text-muted-foreground">
-                                                    {item.tanggal_laporan}
-                                                </td>
-                                                <td className="max-w-[340px] py-3 pr-4">
-                                                    <p className="truncate font-medium">
-                                                        {item.alamat ?? '-'}
-                                                    </p>
-                                                </td>
-                                                <td className="py-3 pr-4 font-medium">
-                                                    {item.pelapor ?? '-'}
-                                                </td>
-                                                <td className="py-3 pr-4">
-                                                    <span
-                                                        className={`rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wider ${statusConfig[item.status]?.color}`}
-                                                    >
-                                                        {statusConfig[
-                                                            item.status
-                                                        ]?.label ?? item.status}
+                            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+                                {laporan.data.map((item) => (
+                                    <div
+                                        key={item.id_laporan}
+                                        className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:border-emerald-200 hover:shadow-md dark:hover:border-emerald-800"
+                                    >
+                                        {(() => {
+                                            const fotoSrc = getFotoSrc(
+                                                item.foto,
+                                            );
+
+                                            return fotoSrc ? (
+                                                <div className="relative h-44 w-full overflow-hidden">
+                                                    <img
+                                                        src={fotoSrc}
+                                                        alt="Foto laporan"
+                                                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                        loading="lazy"
+                                                    />
+                                                    <div className="absolute top-3 left-3">
+                                                        <span className="rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-bold tracking-wider text-white backdrop-blur-sm">
+                                                            #REP-
+                                                            {String(
+                                                                item.id_laporan,
+                                                            ).padStart(5, '0')}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="relative flex h-44 w-full flex-col items-center justify-center gap-2 bg-muted/40">
+                                                    <div className="absolute top-3 left-3">
+                                                        <span className="rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-bold tracking-wider text-white backdrop-blur-sm">
+                                                            #REP-
+                                                            {String(
+                                                                item.id_laporan,
+                                                            ).padStart(5, '0')}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-background text-muted-foreground">
+                                                        <ImageOff className="h-5 w-5" />
+                                                    </div>
+                                                    <span className="text-xs font-semibold text-muted-foreground">
+                                                        Tanpa foto
                                                     </span>
-                                                </td>
-                                                <td className="py-3 text-right">
-                                                    <Link
-                                                        href={`/admin/laporan/${item.id_laporan}`}
-                                                        className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                                                        aria-label="Lihat detail"
-                                                    >
-                                                        <Eye className="h-4 w-4" />
-                                                    </Link>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                                </div>
+                                            );
+                                        })()}
+
+                                        <div className="flex flex-1 flex-col gap-3 p-5">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span
+                                                    className={`rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wider ${statusConfig[item.status]?.color}`}
+                                                >
+                                                    {statusConfig[item.status]
+                                                        ?.label ?? item.status}
+                                                </span>
+                                                <span className="text-xs text-muted-foreground">
+                                                    {item.tanggal_laporan}
+                                                </span>
+                                            </div>
+
+                                            <div className="min-w-0 flex-1">
+                                                <p className="mb-1 line-clamp-1 text-sm font-semibold text-foreground">
+                                                    {item.alamat ||
+                                                        'Lokasi tidak tersedia'}
+                                                </p>
+                                                <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                                                    {item.deskripsi}
+                                                </p>
+                                            </div>
+
+                                            <div className="flex items-center justify-between border-t border-border pt-3">
+                                                <span className="text-xs text-muted-foreground">
+                                                    {item.pelapor ?? 'Anonim'}
+                                                </span>
+                                                <Link
+                                                    href={`/admin/laporan/${item.id_laporan}`}
+                                                    className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-400 dark:hover:bg-emerald-950/50"
+                                                >
+                                                    <Eye className="h-3.5 w-3.5" />
+                                                    Detail
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
 
                             {/* Pagination */}
-                            <div className="flex flex-col items-center justify-between gap-3 border-t border-border pt-4 md:flex-row">
-                                <p className="text-xs text-muted-foreground">
-                                    Halaman {laporan.current_page} dari{' '}
-                                    {laporan.last_page}
-                                </p>
-                                <div className="flex flex-wrap items-center gap-1">
-                                    {laporan.links.map((l, idx) => (
+                            {laporan.last_page > 1 && (
+                                <div className="mt-6 flex items-center justify-center gap-1.5 border-t border-border pt-6">
+                                    <button
+                                        type="button"
+                                        disabled={
+                                            isFiltering ||
+                                            laporan.current_page <= 1
+                                        }
+                                        onClick={() =>
+                                            laporan.current_page > 1 &&
+                                            router.get(
+                                                `?page=${laporan.current_page - 1}`,
+                                                {},
+                                                {
+                                                    preserveScroll: true,
+                                                    preserveState: true,
+                                                    only: [
+                                                        'laporan',
+                                                        'filters',
+                                                    ],
+                                                },
+                                            )
+                                        }
+                                        className={`flex size-9 items-center justify-center rounded-lg text-sm transition-colors ${
+                                            laporan.current_page <= 1 ||
+                                            isFiltering
+                                                ? 'pointer-events-none text-muted-foreground/30'
+                                                : 'text-muted-foreground hover:bg-muted'
+                                        }`}
+                                    >
+                                        <ChevronLeft className="size-4" />
+                                    </button>
+
+                                    {Array.from(
+                                        { length: laporan.last_page },
+                                        (_, i) => i + 1,
+                                    ).map((page) => (
                                         <button
-                                            key={`${l.label}-${idx}`}
+                                            key={page}
                                             type="button"
-                                            disabled={isFiltering || !l.url}
+                                            disabled={isFiltering}
                                             onClick={() =>
-                                                l.url &&
                                                 router.get(
-                                                    l.url,
+                                                    `?page=${page}`,
                                                     {},
                                                     {
                                                         preserveScroll: true,
@@ -748,22 +744,50 @@ export default function AdminLaporanIndex({ stats, laporan, filters }: Props) {
                                                     },
                                                 )
                                             }
-                                            className={[
-                                                'min-w-9 rounded-md px-3 py-2 text-xs transition-colors',
-                                                l.active
-                                                    ? 'bg-emerald-800 text-white'
-                                                    : 'border border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground',
-                                                isFiltering || !l.url
-                                                    ? 'cursor-not-allowed opacity-50'
-                                                    : '',
-                                            ].join(' ')}
-                                            dangerouslySetInnerHTML={{
-                                                __html: l.label,
-                                            }}
-                                        />
+                                            className={`flex size-9 items-center justify-center rounded-lg text-sm font-medium transition-colors ${
+                                                page === laporan.current_page
+                                                    ? 'bg-emerald-800 text-white shadow-sm'
+                                                    : 'text-muted-foreground hover:bg-muted'
+                                            } ${isFiltering ? 'pointer-events-none opacity-50' : ''}`}
+                                        >
+                                            {page}
+                                        </button>
                                     ))}
+
+                                    <button
+                                        type="button"
+                                        disabled={
+                                            isFiltering ||
+                                            laporan.current_page >=
+                                                laporan.last_page
+                                        }
+                                        onClick={() =>
+                                            laporan.current_page <
+                                                laporan.last_page &&
+                                            router.get(
+                                                `?page=${laporan.current_page + 1}`,
+                                                {},
+                                                {
+                                                    preserveScroll: true,
+                                                    preserveState: true,
+                                                    only: [
+                                                        'laporan',
+                                                        'filters',
+                                                    ],
+                                                },
+                                            )
+                                        }
+                                        className={`flex size-9 items-center justify-center rounded-lg text-sm transition-colors ${
+                                            laporan.current_page >=
+                                                laporan.last_page || isFiltering
+                                                ? 'pointer-events-none text-muted-foreground/30'
+                                                : 'text-muted-foreground hover:bg-muted'
+                                        }`}
+                                    >
+                                        <ChevronRight className="size-4" />
+                                    </button>
                                 </div>
-                            </div>
+                            )}
                         </>
                     )}
                 </div>
@@ -771,7 +795,6 @@ export default function AdminLaporanIndex({ stats, laporan, filters }: Props) {
         </>
     );
 }
-
 
 AdminLaporanIndex.layout = {
     breadcrumbs: [

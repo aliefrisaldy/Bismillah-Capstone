@@ -10,9 +10,7 @@ export default function AppUserLayout({
     return (
         <AppShell variant="header">
             <UserHeader breadcrumbs={breadcrumbs} />
-            <AppContent variant="header">
-                {children}
-            </AppContent>
+            <AppContent variant="header">{children}</AppContent>
         </AppShell>
     );
 }

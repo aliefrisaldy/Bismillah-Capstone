@@ -1,19 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
 import { point } from '@turf/helpers';
 import type { Feature, MultiPolygon, Polygon } from 'geojson';
-import { createRoot, type Root } from 'react-dom/client';
-import {
-    Map,
-    MapControls,
-    MapRoute,
-    MapMarker,
-    MarkerContent,
-    MarkerTooltip,
-} from '@/components/ui/map';
-import { useMap } from '@/components/ui/map';
-import maplibregl from 'maplibre-gl';
 import {
     ExternalLink,
     Filter,
@@ -29,7 +17,33 @@ import {
     CheckCircle2,
     XCircle,
     CalendarClock,
+    RotateCcw,
+    Trash2,
 } from 'lucide-react';
+import maplibregl from 'maplibre-gl';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
+import {
+    Map,
+    MapControls,
+    MapRoute,
+    MapMarker,
+    MarkerContent,
+    MarkerTooltip,
+} from '@/components/ui/map';
+import { useMap } from '@/components/ui/map';
+
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+
+import { Button } from '@/components/ui/button';
+
 import { getHariLabel, normalizeJadwal } from '@/lib/jalur-schedule';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -50,6 +64,12 @@ interface Laporan {
     status: PetaStatus;
     tanggal: string;
     pelapor: string;
+}
+
+interface TpsResmi {
+    id: number;
+    latitude: number;
+    longitude: number;
 }
 
 interface JalurProperties {
@@ -180,6 +200,7 @@ function createMarkerElement(color: string, onClick: () => void): HTMLElement {
         e.stopPropagation();
         onClick();
     });
+
     return wrap;
 }
 
@@ -193,6 +214,7 @@ function LaporanPopupCard({
     onClose: () => void;
 }) {
     const cfg = STATUS_CONFIG[laporan.status] ?? STATUS_CONFIG.menunggu;
+
     return (
         <div
             style={{
@@ -484,7 +506,7 @@ function JalurPopupCard({
             <div className="ml-4 flex flex-col gap-1.5 pt-0.5">
                 <Link
                     href={`/admin/jalur/${id}`}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/50"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/50 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
                 >
                     Lihat Detail
                     <ExternalLink className="h-3 w-3" />
@@ -514,7 +536,9 @@ function KelurahanPolygonLayer({
     const { map, isLoaded } = useMap();
 
     useEffect(() => {
-        if (!map || !isLoaded || !selected) return;
+        if (!map || !isLoaded || !selected) {
+            return;
+        }
 
         const filtered: KelurahanGeoJSON = {
             type: 'FeatureCollection',
@@ -565,6 +589,7 @@ function KelurahanPolygonLayer({
                         : f.geometry.coordinates[0][0]; // MultiPolygon
                 coords.forEach(([lng, lat]) => bounds.extend([lng, lat]));
             });
+
             if (!bounds.isEmpty()) {
                 map.fitBounds(bounds, {
                     padding: 80,
@@ -575,17 +600,26 @@ function KelurahanPolygonLayer({
         }
 
         return () => {
-            if (!map || (map as any)._removed) return;
+            if (!map || (map as any)._removed) {
+                return;
+            }
+
             try {
-                if (map.getLayer(KELURAHAN_BORDER))
+                if (map.getLayer(KELURAHAN_BORDER)) {
                     map.removeLayer(KELURAHAN_BORDER);
-                if (map.getLayer(KELURAHAN_FILL))
+                }
+
+                if (map.getLayer(KELURAHAN_FILL)) {
                     map.removeLayer(KELURAHAN_FILL);
-                if (map.getSource(KELURAHAN_SOURCE))
+                }
+
+                if (map.getSource(KELURAHAN_SOURCE)) {
                     map.removeSource(KELURAHAN_SOURCE);
+                }
             } catch {}
         };
     }, [map, isLoaded, geojson, selected]);
+
     return null;
 }
 
@@ -600,7 +634,11 @@ function useNativeMarkers(
     useEffect(() => {
         markersRef.current.forEach((m) => m.remove());
         markersRef.current = [];
-        if (!map) return;
+
+        if (!map) {
+            return;
+        }
+
         laporan.forEach((item) => {
             const cfg = STATUS_CONFIG[item.status] ?? STATUS_CONFIG.menunggu;
             const el = createMarkerElement(cfg.color, () =>
@@ -614,6 +652,7 @@ function useNativeMarkers(
                 .addTo(map);
             markersRef.current.push(marker);
         });
+
         return () => {
             markersRef.current.forEach((m) => m.remove());
             markersRef.current = [];
@@ -643,13 +682,17 @@ function JalurGeoJsonLayer({
     onSelectRef.current = onSelect;
 
     const clearHover = useCallback(() => {
-        if (!map || hoveredIdRef.current == null) return;
+        if (!map || hoveredIdRef.current == null) {
+            return;
+        }
+
         try {
             map.setFeatureState(
                 { source: JALUR_SOURCE, id: hoveredIdRef.current },
                 { hover: false },
             );
         } catch {}
+
         hoveredIdRef.current = null;
         map.getCanvas().style.cursor = '';
     }, [map]);
@@ -668,7 +711,9 @@ function JalurGeoJsonLayer({
     };
 
     useEffect(() => {
-        if (!map || !isLoaded) return;
+        if (!map || !isLoaded) {
+            return;
+        }
 
         if (!map.getSource(JALUR_SOURCE)) {
             map.addSource(JALUR_SOURCE, {
@@ -701,16 +746,27 @@ function JalurGeoJsonLayer({
 
         const handleClick = (e: maplibregl.MapLayerMouseEvent) => {
             const hit = e.features?.[0];
-            if (!hit?.properties?.id) return;
+
+            if (!hit?.properties?.id) {
+                return;
+            }
+
             const id = Number(hit.properties.id);
             const feature = featuresRef.current.find(
                 (f) => f.properties.id === id,
             );
-            if (feature) onSelectRef.current(feature, e.lngLat);
+
+            if (feature) {
+                onSelectRef.current(feature, e.lngLat);
+            }
         };
         const handleEnter = (e: maplibregl.MapLayerMouseEvent) => {
             const hit = e.features?.[0];
-            if (hit?.id == null) return;
+
+            if (hit?.id == null) {
+                return;
+            }
+
             if (
                 hoveredIdRef.current != null &&
                 hoveredIdRef.current !== hit.id
@@ -722,6 +778,7 @@ function JalurGeoJsonLayer({
                     );
                 } catch {}
             }
+
             hoveredIdRef.current = hit.id;
             map.getCanvas().style.cursor = 'pointer';
             map.setFeatureState(
@@ -738,15 +795,24 @@ function JalurGeoJsonLayer({
 
         return () => {
             clearHover();
-            if (!map || (map as any)._removed) return;
+
+            if (!map || (map as any)._removed) {
+                return;
+            }
 
             map.off('click', JALUR_LAYER, handleClick);
             map.off('mouseenter', JALUR_LAYER, handleEnter);
             map.off('mouseleave', JALUR_LAYER, handleLeave);
             map.off('mouseout', handleLeave);
+
             try {
-                if (map.getLayer(JALUR_LAYER)) map.removeLayer(JALUR_LAYER);
-                if (map.getSource(JALUR_SOURCE)) map.removeSource(JALUR_SOURCE);
+                if (map.getLayer(JALUR_LAYER)) {
+                    map.removeLayer(JALUR_LAYER);
+                }
+
+                if (map.getSource(JALUR_SOURCE)) {
+                    map.removeSource(JALUR_SOURCE);
+                }
             } catch {}
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -754,7 +820,10 @@ function JalurGeoJsonLayer({
 
     // Update data saat features / editingId berubah
     useEffect(() => {
-        if (!map || !isLoaded) return;
+        if (!map || !isLoaded) {
+            return;
+        }
+
         clearHover();
         const src = map.getSource(JALUR_SOURCE) as
             | maplibregl.GeoJSONSource
@@ -765,7 +834,10 @@ function JalurGeoJsonLayer({
 
     // Toggle visibility
     useEffect(() => {
-        if (!map || !isLoaded) return;
+        if (!map || !isLoaded) {
+            return;
+        }
+
         if (map.getLayer(JALUR_LAYER)) {
             map.setLayoutProperty(
                 JALUR_LAYER,
@@ -794,7 +866,9 @@ function JalurMapPopup({
     const { map, isLoaded } = useMap();
 
     useEffect(() => {
-        if (!map || !isLoaded) return;
+        if (!map || !isLoaded) {
+            return;
+        }
 
         const el = document.createElement('div');
         const root = createRoot(el);
@@ -834,8 +908,14 @@ function JalurFitBounds({
     const lastKey = useRef('');
 
     useEffect(() => {
-        if (!map || !isLoaded || features.length === 0 || !fitKey) return;
-        if (lastKey.current === fitKey) return;
+        if (!map || !isLoaded || features.length === 0 || !fitKey) {
+            return;
+        }
+
+        if (lastKey.current === fitKey) {
+            return;
+        }
+
         lastKey.current = fitKey;
 
         const bounds = new maplibregl.LngLatBounds();
@@ -844,8 +924,10 @@ function JalurFitBounds({
                 bounds.extend([lng, lat]),
             ),
         );
-        if (!bounds.isEmpty())
+
+        if (!bounds.isEmpty()) {
             map.fitBounds(bounds, { padding: 60, maxZoom: 15, duration: 700 });
+        }
     }, [map, isLoaded, features, fitKey]);
 
     return null;
@@ -878,7 +960,7 @@ function JalurControlPanel({
     const kelurahanDisabled = filterTipe !== 'Pick Up';
 
     return (
-        <div className="absolute bottom-16 left-3 z-[1000] w-[220px] overflow-hidden rounded-xl border border-border bg-card/95 shadow-lg backdrop-blur-sm">
+        <>
             <button
                 type="button"
                 onClick={() => setExpanded((p) => !p)}
@@ -928,21 +1010,47 @@ function JalurControlPanel({
                         <label className="mb-1 block text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                             Tipe Kendaraan
                         </label>
-                        <div className="relative">
-                            <select
-                                value={filterTipe}
-                                onChange={(e) => onFilterTipe(e.target.value)}
-                                className="w-full appearance-none rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                        {/* Filter Tipe */}
+                        <Select
+                            value={filterTipe || 'none'}
+                            onValueChange={(v) =>
+                                onFilterTipe(v === 'none' ? '' : v)
+                            }
+                        >
+                            <SelectTrigger className="h-8 w-full border-border bg-background text-xs font-normal focus-visible:ring-emerald-500/20">
+                                <SelectValue placeholder="— Pilih Tipe —" />
+                            </SelectTrigger>
+                            <SelectContent
+                                className="z-[9999] rounded-xl border-border/80 p-1.5 shadow-lg"
+                                position="popper"
+                                sideOffset={4}
                             >
-                                <option value="">— Pilih Tipe —</option>
+                                <SelectItem
+                                    value="none"
+                                    className="cursor-pointer rounded-lg py-2 pr-8 pl-2.5 text-xs focus:bg-emerald-500/10"
+                                >
+                                    — Pilih Tipe —
+                                </SelectItem>
                                 {TIPE_KENDARAAN.map((t) => (
-                                    <option key={t} value={t}>
-                                        {t}
-                                    </option>
+                                    <SelectItem
+                                        key={t}
+                                        value={t}
+                                        className="cursor-pointer rounded-lg py-2 pr-8 pl-2.5 focus:bg-emerald-500/10"
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            <span
+                                                className="size-2 shrink-0 rounded-full"
+                                                style={{
+                                                    backgroundColor:
+                                                        TIPE_CONFIG[t].warna,
+                                                }}
+                                            />
+                                            <span className="text-xs">{t}</span>
+                                        </span>
+                                    </SelectItem>
                                 ))}
-                            </select>
-                            <ChevronDown className="pointer-events-none absolute top-1/2 right-2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
-                        </div>
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     {/* Filter Kelurahan — hanya Pick Up */}
@@ -952,24 +1060,39 @@ function JalurControlPanel({
                         <label className="mb-1 block text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                             Kelurahan
                         </label>
-                        <div className="relative">
-                            <select
-                                value={filterKelurahan}
-                                disabled={kelurahanDisabled}
-                                onChange={(e) =>
-                                    onFilterKelurahan(e.target.value)
-                                }
-                                className="w-full appearance-none rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none disabled:cursor-not-allowed"
+                        {/* Filter Kelurahan */}
+                        <Select
+                            value={filterKelurahan || 'all'}
+                            onValueChange={(v) =>
+                                onFilterKelurahan(v === 'all' ? '' : v)
+                            }
+                            disabled={kelurahanDisabled}
+                        >
+                            <SelectTrigger className="h-8 w-full border-border bg-background text-xs font-normal focus-visible:ring-emerald-500/20 disabled:cursor-not-allowed">
+                                <SelectValue placeholder="— Semua —" />
+                            </SelectTrigger>
+                            <SelectContent
+                                className="z-[9999] rounded-xl border-border/80 p-1.5 shadow-lg"
+                                position="popper"
+                                sideOffset={4}
                             >
-                                <option value="">— Semua —</option>
+                                <SelectItem
+                                    value="all"
+                                    className="cursor-pointer rounded-lg py-2 pr-8 pl-2.5 text-xs focus:bg-emerald-500/10"
+                                >
+                                    — Semua —
+                                </SelectItem>
                                 {kelurahans.map((k) => (
-                                    <option key={k} value={k}>
+                                    <SelectItem
+                                        key={k}
+                                        value={k}
+                                        className="cursor-pointer rounded-lg py-2 pr-8 pl-2.5 text-xs focus:bg-emerald-500/10"
+                                    >
                                         {k}
-                                    </option>
+                                    </SelectItem>
                                 ))}
-                            </select>
-                            <ChevronDown className="pointer-events-none absolute top-1/2 right-2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
-                        </div>
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     {/* Mini-legend */}
@@ -1009,8 +1132,197 @@ function JalurControlPanel({
                     )}
                 </div>
             )}
-        </div>
+        </>
     );
+}
+
+// ─── Hook: TPS Resmi markers ──────────────────────────────────────────────────
+
+function useTpsMarkers(
+    map: maplibregl.Map | null,
+    tpsList: TpsResmi[],
+    layerOn: boolean,
+    onDelete: (id: number) => void,
+) {
+    const markersRef = useRef<maplibregl.Marker[]>([]);
+    const popupRefHook = useRef<maplibregl.Popup | null>(null);
+
+    useEffect(() => {
+        markersRef.current.forEach((m) => m.remove());
+        markersRef.current = [];
+        popupRefHook.current?.remove();
+        popupRefHook.current = null;
+
+        if (!map || !layerOn || tpsList.length === 0) {
+            return;
+        }
+
+        tpsList.forEach((ts) => {
+            const el = document.createElement('div');
+            el.style.cssText =
+                'display:inline-flex;flex-direction:column;align-items:center;cursor:pointer;user-select:none;';
+            const circle = document.createElement('div');
+            circle.style.cssText = `width:36px;height:36px;border-radius:50%;background:#10b981;border:2.5px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;transition:transform 0.15s;flex-shrink:0;`;
+            circle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="16" viewBox="0 0 576 512"><path fill="white" d="M560 160c10.4 0 18-9.8 15.5-19.9l-24-96C549.7 37 543.3 32 536 32h-98.9l25.6 128zM272 32H171.5l-25.6 128H272zm132.5 0H304v128h126.1zM16 160h97.3l25.6-128H40c-7.3 0-13.7 5-15.5 12.1l-24 96C-2 150.2 5.6 160 16 160m544 64h-20l4-32H32l4 32H16c-8.8 0-16 7.2-16 16v32c0 8.8 7.2 16 16 16h28l20 160v16c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16v-16h320v16c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16v-16l20-160h28c8.8 0 16-7.2 16-16v-32c0-8.8-7.2-16-16-16"/></svg>`;
+            el.addEventListener('mouseenter', () => {
+                circle.style.transform = 'scale(1.12)';
+            });
+            el.addEventListener('mouseleave', () => {
+                circle.style.transform = 'scale(1)';
+            });
+            const tail = document.createElement('div');
+            tail.style.cssText = `width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:9px solid #10b981;margin-top:-1px;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.15));flex-shrink:0;`;
+            el.appendChild(circle);
+            el.appendChild(tail);
+
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                popupRefHook.current?.remove();
+                popupRefHook.current = null;
+
+                const container = document.createElement('div');
+                container.style.cssText =
+                    'width:220px;border-radius:14px;overflow:visible;box-shadow:0 8px 32px rgba(0,0,0,0.18);background:var(--color-card,#fff);border:1px solid var(--color-border,#e5e7eb);position:relative;font-family:system-ui,sans-serif;';
+
+                // ── Header ──
+                const header = document.createElement('div');
+                header.style.cssText =
+                    'background:#10b981;border-radius:14px 14px 0 0;padding:10px 12px;display:flex;align-items:center;gap:8px;';
+
+                const iconWrap = document.createElement('div');
+                iconWrap.style.cssText =
+                    'background:rgba(255,255,255,0.25);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+                iconWrap.innerHTML =
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="14" viewBox="0 0 576 512"><path fill="white" d="M560 160c10.4 0 18-9.8 15.5-19.9l-24-96C549.7 37 543.3 32 536 32h-98.9l25.6 128zM272 32H171.5l-25.6 128H272zm132.5 0H304v128h126.1zM16 160h97.3l25.6-128H40c-7.3 0-13.7 5-15.5 12.1l-24 96C-2 150.2 5.6 160 16 160m544 64h-20l4-32H32l4 32H16c-8.8 0-16 7.2-16 16v32c0 8.8 7.2 16 16 16h28l20 160v16c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16v-16h320v16c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16v-16l20-160h28c8.8 0 16-7.2 16-16v-32c0-8.8-7.2-16-16-16"/></svg>';
+
+                const titleWrap = document.createElement('div');
+                titleWrap.style.cssText = 'flex:1;min-width:0;';
+                const titleLabel = document.createElement('p');
+                titleLabel.style.cssText =
+                    'color:rgba(255,255,255,0.75);font-size:10px;font-weight:700;margin:0;letter-spacing:0.08em;text-transform:uppercase;';
+                titleLabel.textContent = 'TPS Resmi';
+                const titleId = document.createElement('p');
+                titleId.style.cssText =
+                    'color:#fff;font-size:13px;font-weight:800;margin:0;font-family:monospace;';
+                titleId.textContent = `#${String(ts.id).padStart(5, '0')}`;
+                titleWrap.appendChild(titleLabel);
+                titleWrap.appendChild(titleId);
+
+                const badge = document.createElement('span');
+                badge.style.cssText =
+                    'background:rgba(255,255,255,0.22);color:#fff;font-size:10px;font-weight:700;border-radius:20px;padding:3px 9px;border:1px solid rgba(255,255,255,0.35);white-space:nowrap;flex-shrink:0;';
+                badge.textContent = 'Aktif';
+
+                const closeBtn = document.createElement('button');
+                closeBtn.style.cssText =
+                    'background:rgba(0,0,0,0.20);border:none;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#fff;padding:0;transition:opacity 0.15s;';
+                closeBtn.innerHTML =
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+                closeBtn.addEventListener('mouseenter', () => {
+                    closeBtn.style.opacity = '0.7';
+                });
+                closeBtn.addEventListener('mouseleave', () => {
+                    closeBtn.style.opacity = '1';
+                });
+                closeBtn.addEventListener('click', (ce) => {
+                    ce.stopPropagation();
+                    popupRefHook.current?.remove();
+                    popupRefHook.current = null;
+                });
+
+                header.appendChild(iconWrap);
+                header.appendChild(titleWrap);
+                header.appendChild(badge);
+                header.appendChild(closeBtn);
+                container.appendChild(header);
+
+                // ── Body ──
+                const body = document.createElement('div');
+                body.style.cssText =
+                    'padding:12px 14px;display:flex;flex-direction:column;gap:8px;';
+
+                const coordLabel = document.createElement('p');
+                coordLabel.style.cssText =
+                    'font-size:10px;font-weight:700;color:var(--color-muted-foreground,#6b7280);margin:0 0 2px;text-transform:uppercase;letter-spacing:0.06em;';
+                coordLabel.textContent = 'Koordinat';
+                const coordValue = document.createElement('p');
+                coordValue.style.cssText =
+                    'font-size:11px;font-family:monospace;color:var(--color-foreground,#374151);margin:0;';
+                coordValue.textContent = `${ts.latitude.toFixed(6)}, ${ts.longitude.toFixed(6)}`;
+
+                const divider = document.createElement('div');
+                divider.style.cssText =
+                    'border-top:1px solid var(--color-border,#e5e7eb);margin:2px 0;';
+
+                const btn = document.createElement('button');
+                btn.style.cssText =
+                    'width:100%;background:#ef4444;color:#fff;border:none;border-radius:8px;padding:8px 0;font-size:12px;font-weight:700;cursor:pointer;transition:opacity 0.15s;display:flex;align-items:center;justify-content:center;gap:6px;';
+                btn.innerHTML =
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 576 512"><path fill="currentColor" d="M560 160c10.4 0 18-9.8 15.5-19.9l-24-96C549.7 37 543.3 32 536 32h-98.9l25.6 128zM272 32H171.5l-25.6 128H272zm132.5 0H304v128h126.1zM16 160h97.3l25.6-128H40c-7.3 0-13.7 5-15.5 12.1l-24 96C-2 150.2 5.6 160 16 160m544 64h-20l4-32H32l4 32H16c-8.8 0-16 7.2-16 16v32c0 8.8 7.2 16 16 16h28l20 160v16c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16v-16h320v16c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16v-16l20-160h28c8.8 0 16-7.2 16-16v-32c0-8.8-7.2-16-16-16"/></svg> Hapus';
+                btn.addEventListener('mouseenter', () => {
+                    btn.style.opacity = '0.85';
+                });
+                btn.addEventListener('mouseleave', () => {
+                    btn.style.opacity = '1';
+                });
+                btn.addEventListener('click', () => {
+                    onDelete(ts.id);
+                    popupRefHook.current?.remove();
+                    popupRefHook.current = null;
+                });
+
+                body.appendChild(coordLabel);
+                body.appendChild(coordValue);
+                body.appendChild(divider);
+                body.appendChild(btn);
+                container.appendChild(body);
+
+                // ── Caret bawah (border) ──
+                const caretOuter = document.createElement('div');
+                caretOuter.style.cssText =
+                    'position:absolute;bottom:-11px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:11px solid var(--color-border,#e5e7eb);z-index:1;';
+                container.appendChild(caretOuter);
+
+                // ── Caret bawah (fill) ──
+                const caretInner = document.createElement('div');
+                caretInner.style.cssText =
+                    'position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-top:10px solid var(--color-card,#fff);z-index:2;';
+                container.appendChild(caretInner);
+
+                const popup = new maplibregl.Popup({
+                    closeButton: false,
+                    closeOnClick: false,
+                    anchor: 'bottom',
+                    offset: [0, -52],
+                    className: 'mapcn-popup--clean',
+                    maxWidth: '260px',
+                })
+                    .setLngLat([ts.longitude, ts.latitude])
+                    .setDOMContent(container)
+                    .addTo(map);
+                popupRefHook.current = popup;
+                popup.on('close', () => {
+                    popupRefHook.current = null;
+                });
+            });
+
+            const marker = new maplibregl.Marker({
+                element: el,
+                anchor: 'bottom',
+            })
+                .setLngLat([ts.longitude, ts.latitude])
+                .addTo(map);
+            markersRef.current.push(marker);
+        });
+
+        return () => {
+            markersRef.current.forEach((m) => m.remove());
+            markersRef.current = [];
+            popupRefHook.current?.remove();
+            popupRefHook.current = null;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [map, tpsList, layerOn]);
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -1055,6 +1367,15 @@ export default function Peta() {
     const [editCoords, setEditCoords] = useState<[number, number][]>([]);
     const [saving, setSaving] = useState(false);
 
+    // ── TPS Resmi ──
+    const [tpsList, setTpsList] = useState<TpsResmi[]>([]);
+    const [tpsLayerOn, setTpsLayerOn] = useState(false);
+    const [loadingTps, setLoadingTps] = useState(false);
+    const [addingTps, setAddingTps] = useState(false);
+    const [tpsExpanded, setTpsExpanded] = useState(false);
+    const [tpsCoordInput, setTpsCoordInput] = useState('');
+    const [tpsCoordError, setTpsCoordError] = useState('');
+
     // ── Toast ──
     const [toast, setToast] = useState<{
         type: 'success' | 'error';
@@ -1068,7 +1389,10 @@ export default function Peta() {
 
     // ── Theme ──
     const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-        if (typeof document === 'undefined') return 'light';
+        if (typeof document === 'undefined') {
+            return 'light';
+        }
+
         return document.documentElement.classList.contains('dark')
             ? 'dark'
             : 'light';
@@ -1085,15 +1409,21 @@ export default function Peta() {
             attributes: true,
             attributeFilter: ['class'],
         });
+
         return () => observer.disconnect();
     }, []);
 
     // ── Fetch laporan ──
     const fetchLaporan = useCallback(async (status: string) => {
         setLoading(true);
+
         try {
             const params = new URLSearchParams();
-            if (status) params.set('status', status);
+
+            if (status) {
+                params.set('status', status);
+            }
+
             const res = await fetch(`/admin/peta/data?${params.toString()}`);
             setLaporan(await res.json());
         } catch (err) {
@@ -1137,7 +1467,10 @@ export default function Peta() {
     }, []);
 
     const filteredKelurahanList = useMemo(() => {
-        if (!filterKecamatan || !kelurahanGeoJson) return kelurahanList;
+        if (!filterKecamatan || !kelurahanGeoJson) {
+            return kelurahanList;
+        }
+
         return [
             ...new Set(
                 kelurahanGeoJson.features
@@ -1149,15 +1482,21 @@ export default function Peta() {
     }, [filterKecamatan, kelurahanGeoJson, kelurahanList]);
 
     const filteredLaporan = useMemo(() => {
-        if (!filterKelurahan || !kelurahanGeoJson) return laporan;
+        if (!filterKelurahan || !kelurahanGeoJson) {
+            return laporan;
+        }
 
         const feature = kelurahanGeoJson.features.find(
             (f) => f.properties.kelurahan === filterKelurahan,
         );
-        if (!feature) return laporan;
+
+        if (!feature) {
+            return laporan;
+        }
 
         return laporan.filter((item) => {
             const pt = point([item.longitude, item.latitude]);
+
             return booleanPointInPolygon(pt, feature);
         });
     }, [laporan, filterKelurahan, kelurahanGeoJson]);
@@ -1177,14 +1516,20 @@ export default function Peta() {
     const fetchJalur = useCallback(async (tipe: string, kelurahan: string) => {
         if (!tipe) {
             setJalurList([]);
+
             return;
         }
+
         setLoadingJalur(true);
+
         try {
             const params = new URLSearchParams();
             params.set('tipe', tipe);
-            if (kelurahan && tipe === 'Pick Up')
+
+            if (kelurahan && tipe === 'Pick Up') {
                 params.set('kelurahan', kelurahan);
+            }
+
             const res = await fetch(`/admin/jalur-angkut/data?${params}`);
             setJalurList(await res.json());
         } catch {
@@ -1198,23 +1543,54 @@ export default function Peta() {
     }, [filterTipe, effectiveKelurahan, fetchJalur]);
 
     useEffect(() => {
-        if (filterTipe !== 'Pick Up') setFilterJalurKelurahan('');
+        if (filterTipe !== 'Pick Up') {
+            setFilterJalurKelurahan('');
+        }
     }, [filterTipe]);
     useEffect(() => {
-        if (filterTipe) setJalurVisible(true);
+        if (filterTipe) {
+            setJalurVisible(true);
+        }
     }, [filterTipe]);
+
+    // ── Fetch TPS ──
+    const fetchTps = useCallback(async () => {
+        setLoadingTps(true);
+
+        try {
+            const res = await fetch('/admin/tps-resmi/data');
+            setTpsList(await res.json());
+        } catch {
+            console.error('Gagal ambil TPS');
+        } finally {
+            setLoadingTps(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (tpsLayerOn) {
+            fetchTps();
+        } else {
+            setTpsList([]);
+        }
+    }, [tpsLayerOn, fetchTps]);
 
     useEffect(() => {
         setFilterKelurahan('');
     }, [filterKecamatan]);
 
     useEffect(() => {
-        if (!filterKecamatan || !kelurahanGeoJson || !mapRef.current) return;
+        if (!filterKecamatan || !kelurahanGeoJson || !mapRef.current) {
+            return;
+        }
 
         const features = kelurahanGeoJson.features.filter(
             (f) => f.properties.kecamatan === filterKecamatan,
         );
-        if (features.length === 0) return;
+
+        if (features.length === 0) {
+            return;
+        }
 
         const bounds = new maplibregl.LngLatBounds();
         features.forEach((f) => {
@@ -1257,8 +1633,12 @@ export default function Peta() {
     }, []);
 
     const saveEdit = useCallback(async () => {
-        if (editingId === null || editCoords.length < 2) return;
+        if (editingId === null || editCoords.length < 2) {
+            return;
+        }
+
         setSaving(true);
+
         try {
             const res = await fetch(`/admin/jalur-angkut/${editingId}`, {
                 method: 'PUT',
@@ -1273,7 +1653,11 @@ export default function Peta() {
                 },
                 body: JSON.stringify({ coordinates: editCoords }),
             });
-            if (!res.ok) throw new Error();
+
+            if (!res.ok) {
+                throw new Error();
+            }
+
             showToast('success', 'Jalur berhasil diperbarui!');
             cancelEdit();
             fetchJalur(filterTipe, effectiveKelurahan);
@@ -1298,6 +1682,7 @@ export default function Peta() {
         setEditCoords((prev) => {
             const next = [...prev];
             next[index] = [lngLat.lng, lngLat.lat];
+
             return next;
         });
     };
@@ -1306,6 +1691,7 @@ export default function Peta() {
     const closeLaporanPopup = useCallback(() => {
         popupRef.current?.remove();
         popupRef.current = null;
+
         if (popupRootRef.current) {
             const root = popupRootRef.current;
             popupRootRef.current = null;
@@ -1316,7 +1702,11 @@ export default function Peta() {
     const openLaporanPopup = useCallback(
         (item: Laporan) => {
             const map = mapRef.current;
-            if (!map) return;
+
+            if (!map) {
+                return;
+            }
+
             closeLaporanPopup();
             const container = document.createElement('div');
             const root = createRoot(container);
@@ -1354,6 +1744,130 @@ export default function Peta() {
     );
 
     const jalurFitKey = `${filterTipe}|${effectiveKelurahan}|${jalurList.length}`;
+
+    // ── TPS handlers ──
+    const handleDeleteTps = useCallback(
+        async (id: number) => {
+            try {
+                const csrf =
+                    (
+                        document.querySelector(
+                            'meta[name="csrf-token"]',
+                        ) as HTMLMetaElement
+                    )?.content ?? '';
+                const res = await fetch(`/admin/tps-resmi/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': csrf },
+                });
+
+                if (!res.ok) {
+                    throw new Error();
+                }
+
+                showToast('success', 'TPS berhasil dihapus.');
+                fetchTps();
+            } catch {
+                showToast('error', 'Gagal menghapus TPS.');
+            }
+        },
+        [fetchTps, showToast],
+    );
+
+    const handleAddTps = useCallback(
+        async (lngLat: { lat: number; lng: number }) => {
+            try {
+                const csrf =
+                    (
+                        document.querySelector(
+                            'meta[name="csrf-token"]',
+                        ) as HTMLMetaElement
+                    )?.content ?? '';
+                const res = await fetch('/admin/tps-resmi', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                    },
+                    body: JSON.stringify({
+                        latitude: lngLat.lat,
+                        longitude: lngLat.lng,
+                    }),
+                });
+
+                if (!res.ok) {
+                    throw new Error();
+                }
+
+                setAddingTps(false);
+                setTpsCoordInput('');
+                setTpsCoordError('');
+                showToast('success', 'Titik TPS berhasil ditambahkan.');
+                fetchTps();
+            } catch {
+                showToast('error', 'Gagal menambahkan TPS.');
+            }
+        },
+        [fetchTps, showToast],
+    );
+
+    const handleGoToCoord = useCallback(() => {
+        const raw = tpsCoordInput.trim();
+        const parts = raw.split(/[\s,]+/).map(Number);
+
+        if (parts.length !== 2 || parts.some(isNaN)) {
+            setTpsCoordError('Format salah. Contoh: -0.123456, 119.123456');
+
+            return;
+        }
+
+        const [lat, lng] = parts;
+
+        if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+            setTpsCoordError('Koordinat di luar jangkauan.');
+
+            return;
+        }
+
+        setTpsCoordError('');
+
+        const map = mapRef.current;
+
+        if (!map) {
+            return;
+        }
+
+        handleAddTps({ lat, lng });
+        map.flyTo({ center: [lng, lat], zoom: 17, duration: 800 });
+    }, [tpsCoordInput, handleAddTps]);
+
+    // ── Map click saat addingTps ──
+    useEffect(() => {
+        const map = mapRef.current;
+
+        if (!map || !mapReady || !addingTps) {
+            return;
+        }
+
+        const handler = (e: maplibregl.MapMouseEvent) => {
+            handleAddTps(e.lngLat);
+        };
+
+        map.on('click', handler);
+        map.getCanvas().style.cursor = 'crosshair';
+
+        return () => {
+            map.off('click', handler);
+            map.getCanvas().style.cursor = '';
+        };
+    }, [addingTps, mapReady, handleAddTps]);
+
+    // ── Hook TPS markers ──
+    useTpsMarkers(
+        mapReady ? mapRef.current : null,
+        tpsList,
+        tpsLayerOn,
+        handleDeleteTps,
+    );
 
     return (
         <>
@@ -1401,6 +1915,7 @@ export default function Peta() {
                             (l) => l.status === key,
                         ).length;
                         const active = filterStatus === key;
+
                         return (
                             <button
                                 key={key}
@@ -1435,81 +1950,170 @@ export default function Peta() {
                     <span className="text-sm font-medium text-muted-foreground">
                         Filter Laporan:
                     </span>
-                    <select
-                        value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value)}
-                        className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                    >
-                        <option value="">Semua Status</option>
-                        {PETA_STATUSES.map((key) => (
-                            <option key={key} value={key}>
-                                {STATUS_CONFIG[key].label}
-                            </option>
-                        ))}
-                    </select>
-                    <select
-                        value={filterKecamatan}
-                        onChange={(e) => setFilterKecamatan(e.target.value)}
-                        className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                    >
-                        <option value="">Semua Kecamatan</option>
-                        {kecamatanList.map((k) => (
-                            <option key={k} value={k}>
-                                {k}
-                            </option>
-                        ))}
-                    </select>
 
-                    {/* LAMA: select kelurahan — hanya ubah kelurahanList → filteredKelurahanList */}
-                    <select
-                        value={filterKelurahan}
-                        onChange={(e) => setFilterKelurahan(e.target.value)}
-                        className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    {/* Status */}
+                    <Select
+                        value={filterStatus || 'all'}
+                        onValueChange={(v) =>
+                            setFilterStatus(v === 'all' ? '' : v)
+                        }
                     >
-                        <option value="">Semua Kelurahan</option>
-                        {filteredKelurahanList.map(
-                            (
-                                k, // <-- perubahan di sini
-                            ) => (
-                                <option key={k} value={k}>
-                                    {k}
-                                </option>
-                            ),
+                        <SelectTrigger className="h-9 w-[160px] border-input bg-background font-normal shadow-sm focus-visible:border-emerald-500/50 focus-visible:ring-emerald-500/20 dark:bg-input/30 dark:hover:bg-input/45">
+                            <SelectValue placeholder="Semua Status" />
+                        </SelectTrigger>
+                        <SelectContent
+                            align="start"
+                            className="min-w-[var(--radix-select-trigger-width)] rounded-xl border-border/80 p-1.5 shadow-lg dark:border-sidebar-border"
+                        >
+                            <SelectItem
+                                value="all"
+                                className="cursor-pointer rounded-lg py-2.5 pr-10 pl-2.5 focus:bg-emerald-500/10 focus:text-foreground dark:focus:bg-emerald-500/15"
+                            >
+                                <span className="flex items-center gap-2.5">
+                                    <span className="size-2 shrink-0 rounded-full bg-muted-foreground/35 ring-1 ring-border" />
+                                    <span className="text-sm">
+                                        Semua Status
+                                    </span>
+                                </span>
+                            </SelectItem>
+                            {[
+                                {
+                                    value: 'menunggu',
+                                    label: 'Menunggu',
+                                    dot: 'bg-amber-500 shadow-[0_0_0_2px_rgba(245,158,11,0.25)]',
+                                },
+                                {
+                                    value: 'diverifikasi',
+                                    label: 'Diverifikasi',
+                                    dot: 'bg-blue-500 shadow-[0_0_0_2px_rgba(59,130,246,0.25)]',
+                                },
+                                {
+                                    value: 'diproses',
+                                    label: 'Diproses',
+                                    dot: 'bg-orange-500 shadow-[0_0_0_2px_rgba(249,115,22,0.25)]',
+                                },
+                                {
+                                    value: 'selesai',
+                                    label: 'Selesai',
+                                    dot: 'bg-emerald-500 shadow-[0_0_0_2px_rgba(16,185,129,0.25)]',
+                                },
+                                {
+                                    value: 'ditolak',
+                                    label: 'Ditolak',
+                                    dot: 'bg-red-500 shadow-[0_0_0_2px_rgba(239,68,68,0.25)]',
+                                },
+                            ].map((opt) => (
+                                <SelectItem
+                                    key={opt.value}
+                                    value={opt.value}
+                                    className="cursor-pointer rounded-lg py-2.5 pr-10 pl-2.5 focus:bg-emerald-500/10 focus:text-foreground dark:focus:bg-emerald-500/15"
+                                >
+                                    <span className="flex items-center gap-2.5">
+                                        <span
+                                            className={`size-2 shrink-0 rounded-full ${opt.dot}`}
+                                        />
+                                        <span className="text-sm">
+                                            {opt.label}
+                                        </span>
+                                    </span>
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    {/* Kecamatan */}
+                    <Select
+                        value={filterKecamatan || 'all'}
+                        onValueChange={(v) =>
+                            setFilterKecamatan(v === 'all' ? '' : v)
+                        }
+                    >
+                        <SelectTrigger className="h-9 w-[180px] border-input bg-background font-normal shadow-sm focus-visible:border-emerald-500/50 focus-visible:ring-emerald-500/20 dark:bg-input/30 dark:hover:bg-input/45">
+                            <SelectValue placeholder="Semua Kecamatan" />
+                        </SelectTrigger>
+                        <SelectContent
+                            align="start"
+                            className="rounded-xl border-border/80 p-1.5 shadow-lg dark:border-sidebar-border"
+                        >
+                            <SelectItem
+                                value="all"
+                                className="cursor-pointer rounded-lg py-2.5 pr-10 pl-2.5 focus:bg-emerald-500/10 focus:text-foreground"
+                            >
+                                <span className="text-sm">Semua Kecamatan</span>
+                            </SelectItem>
+                            {kecamatanList.map((k) => (
+                                <SelectItem
+                                    key={k}
+                                    value={k}
+                                    className="cursor-pointer rounded-lg py-2.5 pr-10 pl-2.5 focus:bg-emerald-500/10 focus:text-foreground"
+                                >
+                                    <span className="text-sm">{k}</span>
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    {/* Kelurahan — disabled sebelum kecamatan dipilih */}
+                    <Select
+                        value={filterKelurahan || 'all'}
+                        onValueChange={(v) =>
+                            setFilterKelurahan(v === 'all' ? '' : v)
+                        }
+                        disabled={!filterKecamatan}
+                    >
+                        <SelectTrigger className="h-9 w-[180px] border-input bg-background font-normal shadow-sm focus-visible:border-emerald-500/50 focus-visible:ring-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30 dark:hover:bg-input/45">
+                            <SelectValue
+                                placeholder={
+                                    filterKecamatan
+                                        ? 'Semua Kelurahan'
+                                        : 'Pilih kecamatan dulu'
+                                }
+                            />
+                        </SelectTrigger>
+                        <SelectContent
+                            align="start"
+                            className="rounded-xl border-border/80 p-1.5 shadow-lg dark:border-sidebar-border"
+                        >
+                            <SelectItem
+                                value="all"
+                                className="cursor-pointer rounded-lg py-2.5 pr-10 pl-2.5 focus:bg-emerald-500/10 focus:text-foreground"
+                            >
+                                <span className="text-sm">Semua Kelurahan</span>
+                            </SelectItem>
+                            {filteredKelurahanList.map((k) => (
+                                <SelectItem
+                                    key={k}
+                                    value={k}
+                                    className="cursor-pointer rounded-lg py-2.5 pr-10 pl-2.5 focus:bg-emerald-500/10 focus:text-foreground"
+                                >
+                                    <span className="text-sm">{k}</span>
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    <div className="ml-auto flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
+                            {loading
+                                ? 'Memuat...'
+                                : `${filteredLaporan.length} Laporan`}
+                        </span>
+
+                        {(filterStatus || filterKecamatan || filterKelurahan) && (
+                            <Button
+                                variant="ghost"
+                                className="gap-2"
+                                onClick={() => {
+                                    setFilterStatus('');
+                                    setFilterKecamatan('');
+                                    setFilterKelurahan('');
+                                }}
+                            >
+                                <RotateCcw className="h-4 w-4" />
+                                Reset Filter
+                            </Button>
                         )}
-                    </select>
-                    <span className="ml-auto text-xs text-muted-foreground">
-                        {loading
-                            ? 'Memuat...'
-                            : `${filteredLaporan.length} laporan di peta`}
-                    </span>
-                    {filterStatus && (
-                        <button
-                            type="button"
-                            onClick={() => setFilterStatus('')}
-                            className="text-xs font-semibold text-emerald-700 hover:underline dark:text-emerald-300"
-                        >
-                            Reset filter
-                        </button>
-                    )}
-                    {filterKecamatan && (
-                        <button
-                            type="button"
-                            onClick={() => setFilterKecamatan('')}
-                            className="text-xs font-semibold text-emerald-700 hover:underline dark:text-emerald-300"
-                        >
-                            Reset filter kecamatan
-                        </button>
-                    )}
-
-                    {filterKelurahan && (
-                        <button
-                            type="button"
-                            onClick={() => setFilterKelurahan('')}
-                            className="text-xs font-semibold text-emerald-700 hover:underline dark:text-emerald-300"
-                        >
-                            Reset filter kelurahan
-                        </button>
-                    )}
+                    </div>
                 </div>
 
                 {/* Peta */}
@@ -1573,7 +2177,10 @@ export default function Peta() {
                                     editingId={editingId}
                                     onSelect={(feature, lngLat) => {
                                         // Jangan buka popup kalau sedang edit
-                                        if (editingId !== null) return;
+                                        if (editingId !== null) {
+                                            return;
+                                        }
+
                                         setPopupJalur(feature);
                                         setPopupLngLat([
                                             lngLat.lng,
@@ -1648,18 +2255,124 @@ export default function Peta() {
                         </Map>
                     </div>
 
-                    {/* Panel kontrol jalur angkut */}
-                    <JalurControlPanel
-                        visible={jalurVisible}
-                        onToggleVisible={() => setJalurVisible((p) => !p)}
-                        filterTipe={filterTipe}
-                        onFilterTipe={setFilterTipe}
-                        filterKelurahan={filterJalurKelurahan}
-                        onFilterKelurahan={setFilterJalurKelurahan}
-                        kelurahans={kelurahans}
-                        jalurCount={jalurList.length}
-                        loadingJalur={loadingJalur}
-                    />
+                    {/* Floating panel input koordinat TPS */}
+                    {addingTps && (
+                        <div className="absolute top-1/2 left-1/2 z-[1001] w-[240px] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-card/95 p-3 shadow-xl backdrop-blur-sm">
+                            <p className="mb-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
+                                Atau masukkan koordinat
+                            </p>
+                            <input
+                                type="text"
+                                value={tpsCoordInput}
+                                onChange={(e) => {
+                                    setTpsCoordInput(e.target.value);
+                                    setTpsCoordError('');
+                                }}
+                                placeholder="-0.123456, 119.123456"
+                                className="w-full rounded-lg border border-border bg-background px-2.5 py-1.5 font-mono text-[11px] text-foreground placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-emerald-500/50 focus:outline-none"
+                            />
+                            {tpsCoordError && (
+                                <p className="mt-1 text-[10px] text-red-500">
+                                    {tpsCoordError}
+                                </p>
+                            )}
+                            <button
+                                type="button"
+                                onClick={handleGoToCoord}
+                                className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg bg-emerald-500 py-2 text-xs font-bold text-white transition-opacity hover:opacity-90"
+                            >
+                                Tandai Lokasi
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Panel kontrol gabungan: Jalur Angkut + TPS Resmi */}
+                    <div className="absolute top-3 left-3 z-[1000] w-[220px] rounded-xl border border-border bg-card/95 shadow-lg backdrop-blur-sm">
+                        {/* Jalur Angkut */}
+                        <JalurControlPanel
+                            visible={jalurVisible}
+                            onToggleVisible={() => setJalurVisible((p) => !p)}
+                            filterTipe={filterTipe}
+                            onFilterTipe={setFilterTipe}
+                            filterKelurahan={filterJalurKelurahan}
+                            onFilterKelurahan={setFilterJalurKelurahan}
+                            kelurahans={kelurahans}
+                            jalurCount={jalurList.length}
+                            loadingJalur={loadingJalur}
+                        />
+
+                        {/* TPS Resmi */}
+                        <div className="border-t border-border">
+                            <div className="flex items-center gap-2 px-3 py-2.5">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 576 512"
+                                    className="shrink-0"
+                                    style={{ color: '#10b981' }}
+                                >
+                                    <path
+                                        fill="currentColor"
+                                        d="M560 160c10.4 0 18-9.8 15.5-19.9l-24-96C549.7 37 543.3 32 536 32h-98.9l25.6 128zM272 32H171.5l-25.6 128H272zm132.5 0H304v128h126.1zM16 160h97.3l25.6-128H40c-7.3 0-13.7 5-15.5 12.1l-24 96C-2 150.2 5.6 160 16 160m544 64h-20l4-32H32l4 32H16c-8.8 0-16 7.2-16 16v32c0 8.8 7.2 16 16 16h28l20 160v16c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16v-16h320v16c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16v-16l20-160h28c8.8 0 16-7.2 16-16v-32c0-8.8-7.2-16-16-16"
+                                    />
+                                </svg>
+                                <span className="flex-1 text-xs font-bold text-foreground">
+                                    TPS Resmi
+                                </span>
+                                {loadingTps && (
+                                    <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                                )}
+                                {!loadingTps && tpsLayerOn && (
+                                    <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                                        {tpsList.length}
+                                    </span>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setTpsLayerOn((p) => !p);
+                                        setAddingTps(false);
+                                        setTpsCoordInput('');
+                                        setTpsCoordError('');
+                                        setTpsExpanded(false);
+                                    }}
+                                    className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold transition-colors ${tpsLayerOn ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-muted text-muted-foreground'}`}
+                                >
+                                    {tpsLayerOn ? (
+                                        <Eye className="h-3 w-3" />
+                                    ) : (
+                                        <EyeOff className="h-3 w-3" />
+                                    )}
+                                </button>
+                                <ChevronDown
+                                    className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${tpsExpanded ? 'rotate-180' : ''} ${tpsLayerOn ? '' : 'pointer-events-none opacity-40'}`}
+                                    onClick={() => setTpsExpanded((p) => !p)}
+                                />
+                            </div>
+                            {tpsExpanded && tpsLayerOn && (
+                                <div className="space-y-2 border-t border-border px-3 py-2.5">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setAddingTps((p) => !p);
+                                            setTpsCoordInput('');
+                                            setTpsCoordError('');
+                                        }}
+                                        className={`flex w-full items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition-colors ${addingTps ? 'bg-amber-500 text-white hover:bg-amber-600' : 'bg-emerald-500 text-white hover:bg-emerald-600'}`}
+                                    >
+                                        <MapPin className="h-3.5 w-3.5" />
+                                        {addingTps ? 'Batal' : 'Tambah Titik'}
+                                    </button>
+                                    {addingTps && (
+                                        <p className="text-center text-[10px] text-muted-foreground">
+                                            Klik lokasi di peta untuk menyimpan
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
 
                     {/* Legend */}
                     <div className="flex flex-wrap items-center gap-4 border-t border-border px-4 py-3">
@@ -1753,7 +2466,7 @@ export default function Peta() {
                                         ].map((h) => (
                                             <th
                                                 key={h}
-                                                className="px-5 py-3 text-left"
+                                                className="px-5 py-3 text-center"
                                             >
                                                 {h}
                                             </th>
@@ -1763,28 +2476,29 @@ export default function Peta() {
                                 <tbody className="divide-y divide-border">
                                     {filteredLaporan.map((item) => {
                                         const cfg = STATUS_CONFIG[item.status];
+
                                         return (
                                             <tr
                                                 key={item.id}
                                                 className="transition-colors hover:bg-muted/40"
                                             >
-                                                <td className="px-5 py-3 font-mono text-xs text-muted-foreground">
+                                                <td className="px-5 py-3 text-center font-mono text-xs text-muted-foreground">
                                                     #
                                                     {String(item.id).padStart(
                                                         5,
                                                         '0',
                                                     )}
                                                 </td>
-                                                <td className="px-5 py-3 font-semibold text-foreground">
+                                                <td className="px-5 py-3 text-center font-semibold text-foreground">
                                                     {item.pelapor}
                                                 </td>
-                                                <td className="max-w-[200px] truncate px-5 py-3 text-muted-foreground">
+                                                <td className="max-w-[200px] truncate px-5 py-3 text-center text-muted-foreground">
                                                     {item.alamat}
                                                 </td>
-                                                <td className="px-5 py-3 whitespace-nowrap text-muted-foreground">
+                                                <td className="px-5 py-3 text-center whitespace-nowrap text-muted-foreground">
                                                     {item.tanggal}
                                                 </td>
-                                                <td className="px-5 py-3">
+                                                <td className="px-5 py-3 text-center">
                                                     <span
                                                         className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${cfg?.pill}`}
                                                     >
@@ -1794,12 +2508,13 @@ export default function Peta() {
                                                         {cfg?.label}
                                                     </span>
                                                 </td>
-                                                <td className="px-5 py-3">
+                                                <td className="px-5 py-3 text-center">
                                                     <Link
                                                         href={`/admin/laporan/${item.id}`}
-                                                        className="text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-300"
+                                                        className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                                        aria-label="Lihat detail"
                                                     >
-                                                        Detail →
+                                                        <Eye className="h-4 w-4" />
                                                     </Link>
                                                 </td>
                                             </tr>

@@ -1,15 +1,13 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import type { ReactNode} from 'react';
+import { format } from 'date-fns';
+import { id } from 'date-fns/locale';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import {
     ArrowLeft,
     Loader2,
@@ -22,16 +20,19 @@ import {
     ChevronRight,
     CheckCircle2,
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { id } from 'date-fns/locale';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -60,16 +61,25 @@ const FadeIn = ({
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
                         setIsVisible(true);
-                        if (domRef.current) observer.unobserve(domRef.current);
+
+                        if (domRef.current) {
+observer.unobserve(domRef.current);
+}
                     }
                 });
             },
             { threshold: 0.1 },
         );
         const currentRef = domRef.current;
-        if (currentRef) observer.observe(currentRef);
+
+        if (currentRef) {
+observer.observe(currentRef);
+}
+
         return () => {
-            if (currentRef) observer.unobserve(currentRef);
+            if (currentRef) {
+observer.unobserve(currentRef);
+}
         };
     }, []);
 
@@ -105,6 +115,7 @@ function ChangeView({
 }) {
     const map = useMap();
     map.setView(center, zoom);
+
     return null;
 }
 
@@ -180,16 +191,30 @@ const statusMeta: Record<
 function toNumberOrNull(
     input: string | number | null | undefined,
 ): number | null {
-    if (input === null || input === undefined) return null;
-    if (typeof input === 'number') return Number.isFinite(input) ? input : null;
+    if (input === null || input === undefined) {
+return null;
+}
+
+    if (typeof input === 'number') {
+return Number.isFinite(input) ? input : null;
+}
+
     const n = Number(String(input).trim());
+
     return Number.isFinite(n) ? n : null;
 }
 
 function safeDateLabel(input?: string | null) {
-    if (!input) return '-';
+    if (!input) {
+return '-';
+}
+
     const d = new Date(input);
-    if (Number.isNaN(d.getTime())) return '-';
+
+    if (Number.isNaN(d.getTime())) {
+return '-';
+}
+
     return format(d, 'EEEE, d MMMM yyyy - HH:mm', { locale: id }) + ' WITA';
 }
 
@@ -207,6 +232,7 @@ function forwardStatus(current: LaporanStatus): LaporanStatus | null {
         diverifikasi: 'diproses',
         diproses: 'selesai',
     };
+
     return m[current] ?? null;
 }
 
@@ -214,6 +240,7 @@ function fotoSrc(path: string): string {
     if (path.startsWith('http://') || path.startsWith('https://')) {
         return path;
     }
+
     return `/storage/${path}`;
 }
 
@@ -221,9 +248,18 @@ function isStatusSelectable(
     current: LaporanStatus,
     target: LaporanStatus,
 ): boolean {
-    if (current === 'selesai' || current === 'ditolak') return false;
-    if (target === current) return false;
-    if (target === 'ditolak') return true;
+    if (current === 'selesai' || current === 'ditolak') {
+return false;
+}
+
+    if (target === current) {
+return false;
+}
+
+    if (target === 'ditolak') {
+return true;
+}
+
     return forwardStatus(current) === target;
 }
 
@@ -239,13 +275,21 @@ export default function AdminLaporanShow({ laporan }: Props) {
 
     const images = useMemo(() => {
         const foto = laporan.foto;
-        if (Array.isArray(foto)) return foto.filter(Boolean);
-        if (typeof foto === 'string' && foto) return [foto];
+
+        if (Array.isArray(foto)) {
+return foto.filter(Boolean);
+}
+
+        if (typeof foto === 'string' && foto) {
+return [foto];
+}
+
         return [];
     }, [laporan.foto]);
 
     const latestTindakLanjut = useMemo(() => {
         const arr = laporan.tindak_lanjut ?? [];
+
         return arr.length ? arr[arr.length - 1] : null;
     }, [laporan.tindak_lanjut]);
 
@@ -253,11 +297,20 @@ export default function AdminLaporanShow({ laporan }: Props) {
         laporan.status === 'selesai' || laporan.status === 'ditolak';
 
     const defaultNextStatus = useMemo(() => {
-        if (terminal) return laporan.status;
+        if (terminal) {
+return laporan.status;
+}
+
         const forward = forwardStatus(laporan.status);
-        if (forward && isStatusSelectable(laporan.status, forward))
-            return forward;
-        if (isStatusSelectable(laporan.status, 'ditolak')) return 'ditolak';
+
+        if (forward && isStatusSelectable(laporan.status, forward)) {
+return forward;
+}
+
+        if (isStatusSelectable(laporan.status, 'ditolak')) {
+return 'ditolak';
+}
+
         return laporan.status;
     }, [terminal, laporan.status]);
 
@@ -291,12 +344,19 @@ export default function AdminLaporanShow({ laporan }: Props) {
         !saving;
 
     const submitStatus = () => {
-        if (!canSave) return;
+        if (!canSave) {
+return;
+}
+
         setSaving(true);
 
         const fd = new FormData();
         fd.append('status', nextStatus);
-        if (catatan.trim()) fd.append('catatan', catatan.trim());
+
+        if (catatan.trim()) {
+fd.append('catatan', catatan.trim());
+}
+
         if (nextStatus === 'selesai') {
             fotoBuktiFiles.forEach((file) =>
                 fd.append('foto_penanganan[]', file),
@@ -569,7 +629,9 @@ export default function AdminLaporanShow({ laporan }: Props) {
                     <Dialog
                         open={!!activeImage}
                         onOpenChange={(open) => {
-                            if (!open) setActiveImage(null);
+                            if (!open) {
+setActiveImage(null);
+}
                         }}
                     >
                         <DialogContent className="max-w-5xl p-0">
@@ -624,14 +686,18 @@ export default function AdminLaporanShow({ laporan }: Props) {
                                             onValueChange={(v) => {
                                                 const target =
                                                     v as LaporanStatus;
+
                                                 if (
                                                     !isStatusSelectable(
                                                         laporan.status,
                                                         target,
                                                     )
-                                                )
-                                                    return;
+                                                ) {
+return;
+}
+
                                                 setNextStatus(target);
+
                                                 if (target !== 'selesai') {
                                                     setFotoBuktiFiles([]);
                                                     setFotoInputKey(
@@ -656,6 +722,7 @@ export default function AdminLaporanShow({ laporan }: Props) {
                                                     const isCurrent =
                                                         value ===
                                                         laporan.status;
+
                                                     return (
                                                         <SelectItem
                                                             key={value}
@@ -824,6 +891,7 @@ export default function AdminLaporanShow({ laporan }: Props) {
                                         s in statusMeta
                                             ? (s as LaporanStatus)
                                             : null;
+
                                     return (
                                         <div
                                             key={`${r.tanggal}-${idx}`}
