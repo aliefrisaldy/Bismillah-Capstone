@@ -17,7 +17,7 @@ Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
-// ─── REDIRECT /dashboard → /user/laporan (tidak dipakai lagi) ─
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
         return redirect('/user/laporan');
@@ -25,6 +25,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 require __DIR__.'/settings.php';
+
+
 
 // ─── AUTH ADMIN ───────────────────────────────────────────
 Route::get('/admin/login', [AdminAuthController::class, 'showLogin'])
@@ -59,7 +61,11 @@ Route::prefix('admin')->name('admin.')->middleware('auth.admin')->group(function
     Route::get('peta',      [PetaController::class, 'index'])->name('peta.index');
     Route::get('peta/data', [PetaController::class, 'data'])->name('peta.data');
 
-    Route::get('/jalur-angkut', [JalurAngkutController::class, 'index']);
+    Route::get('jalur', [JalurAngkutController::class, 'listIndex'])->name('jalur.index');
+    Route::get('jalur/{id}/edit', [JalurAngkutController::class, 'edit'])->name('jalur.edit');
+    Route::put('jalur/{id}', [JalurAngkutController::class, 'updateDetails'])->name('jalur.update');
+    Route::get('jalur/{id}', [JalurAngkutController::class, 'show'])->name('jalur.show');
+    Route::get('/jalur-angkut', [JalurAngkutController::class, 'index'])->name('jalur-angkut.index');
     Route::get('/jalur-angkut/data', [JalurAngkutController::class, 'data']);
     Route::put('/jalur-angkut/{id}', [JalurAngkutController::class, 'update']);
     Route::patch('/jalur-angkut/{id}/toggle', [JalurAngkutController::class, 'toggleAktif']);

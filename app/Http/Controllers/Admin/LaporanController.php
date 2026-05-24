@@ -10,6 +10,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use App\Services\FonnteService;
+use Illuminate\Support\Facades\Log;
+use App\Jobs\KirimNotifikasiWa;
 
 class LaporanController extends Controller
 {
@@ -20,10 +23,10 @@ class LaporanController extends Controller
         if ($request->filled('q')) {
             $q = trim((string) $request->q);
             $query->where(function ($sub) use ($q) {
-                $sub->when(is_numeric($q), fn ($s) => $s->orWhere('id_laporan', (int) $q))
+                $sub->when(is_numeric($q), fn($s) => $s->orWhere('id_laporan', (int) $q))
                     ->orWhere('alamat', 'like', '%' . $q . '%')
                     ->orWhere('deskripsi', 'like', '%' . $q . '%')
-                    ->orWhereHas('user', fn ($u) => $u->where('nama', 'like', '%' . $q . '%'));
+                    ->orWhereHas('user', fn($u) => $u->where('nama', 'like', '%' . $q . '%'));
             });
         }
 
@@ -78,10 +81,10 @@ class LaporanController extends Controller
         if ($request->filled('q')) {
             $q = trim((string) $request->q);
             $query->where(function ($sub) use ($q) {
-                $sub->when(is_numeric($q), fn ($s) => $s->orWhere('id_laporan', (int) $q))
+                $sub->when(is_numeric($q), fn($s) => $s->orWhere('id_laporan', (int) $q))
                     ->orWhere('alamat', 'like', '%' . $q . '%')
                     ->orWhere('deskripsi', 'like', '%' . $q . '%')
-                    ->orWhereHas('user', fn ($u) => $u->where('nama', 'like', '%' . $q . '%'));
+                    ->orWhereHas('user', fn($u) => $u->where('nama', 'like', '%' . $q . '%'));
             });
         }
 
@@ -165,7 +168,7 @@ class LaporanController extends Controller
                     'email' => $laporan->user?->email,
                     'no_telpon' => $laporan->user?->no_telpon,
                 ],
-                'tindak_lanjut' => $laporan->tindakLanjut->map(fn ($t) => [
+                'tindak_lanjut' => $laporan->tindakLanjut->map(fn($t) => [
                     'catatan' => $t->catatan,
                     'foto_penanganan' => TindakLanjut::normalizeFotoPaths($t->foto_penanganan),
                     'tanggal' => $t->tanggal?->format('d M Y H:i'),
@@ -202,7 +205,7 @@ class LaporanController extends Controller
 
         $statusBaru = (string) $request->status;
 
-        if (! $this->isAllowedStatusTransition($statusLama, $statusBaru)) {
+        if (!$this->isAllowedStatusTransition($statusLama, $statusBaru)) {
             return back()->withErrors([
                 'status' => 'Perubahan status harus mengikuti alur: Menunggu → Diverifikasi → Diproses → Selesai. Penolakan dapat dilakukan kapan saja sebelum selesai.',
             ]);
@@ -216,8 +219,10 @@ class LaporanController extends Controller
             ]);
         }
 
+        // 1. Update status
         $laporan->update(['status' => $statusBaru]);
 
+        // 2. Catat riwayat
         RiwayatStatus::create([
             'id_laporan' => $laporan->id_laporan,
             'id_admin' => Auth::guard('admin')->id(),
@@ -226,9 +231,11 @@ class LaporanController extends Controller
             'catatan' => $request->catatan,
         ]);
 
+        // 3. Simpan foto & tindak lanjut kalau selesai
+        $fotoPaths = [];
         if ($statusBaru === 'selesai') {
             $fotoPaths = collect($fotoFiles)
-                ->map(fn ($file) => $file->store('tindak_lanjut', 'public'))
+                ->map(fn($file) => $file->store('tindak_lanjut', 'public'))
                 ->values()
                 ->all();
 
@@ -238,6 +245,28 @@ class LaporanController extends Controller
                 'catatan' => $request->catatan,
                 'foto_penanganan' => $fotoPaths,
             ]);
+        }
+
+        // 4. Kirim notifikasi WA via queue (background)
+        $noWa = $laporan->user?->no_telpon;
+        if ($noWa) {
+            $pesanStatus = [
+                'diverifikasi' => "✅ *Laporan Anda telah diverifikasi!*",
+                'diproses' => "🔧 *Laporan Anda sedang diproses!*",
+                'selesai' => "🎉 *Laporan Anda telah selesai ditangani!*",
+                'ditolak' => "❌ *Laporan Anda ditolak.*",
+            ];
+
+            $pesan = $pesanStatus[$statusBaru] ?? "📋 Status laporan Anda diperbarui.";
+            $catatan = $request->catatan ? "\n\n📝 Catatan: {$request->catatan}" : '';
+
+            $teksNotif = $pesan .
+                "\n\n📋 No. Laporan: *#{$laporan->id_laporan}*" .
+                "\n📍 Lokasi: {$laporan->alamat}" .
+                $catatan .
+                "\n\nTerima kasih telah melapor kepada DLH 🌿";
+
+            KirimNotifikasiWa::dispatch($noWa, $teksNotif, $fotoPaths);
         }
 
         return back()->with('success', 'Status laporan berhasil diperbarui.');
@@ -274,7 +303,7 @@ class LaporanController extends Controller
         ]);
 
         $fotoPaths = collect(array_filter($request->file('foto_penanganan') ?? []))
-            ->map(fn ($file) => $file->store('tindak_lanjut', 'public'))
+            ->map(fn($file) => $file->store('tindak_lanjut', 'public'))
             ->values()
             ->all();
 

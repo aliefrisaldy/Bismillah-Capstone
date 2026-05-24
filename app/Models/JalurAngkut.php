@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['nama', 'kelurahan', 'tipe_kendaraan', 'coordinates', 'warna', 'aktif'])]
+#[Fillable(['nama', 'kelurahan', 'tipe_kendaraan', 'coordinates', 'warna', 'aktif', 'jadwal'])]
 class JalurAngkut extends Model
 {
     protected $table = 'jalur_angkut';
@@ -14,29 +14,32 @@ class JalurAngkut extends Model
     protected $casts = [
         'coordinates' => 'array',
         'aktif' => 'boolean',
+        'jadwal' => 'array',
     ];
 
-    public function toGeoJson(): array
+    public function getNormalizedCoordinates(): array
     {
         $raw = $this->coordinates ?? [];
 
-        // Flatten triple-nested: [[[lng,lat]]] → [[lng,lat]]
         if (isset($raw[0][0]) && is_array($raw[0][0])) {
-            $raw = $raw[0]; // unwrap satu level
+            $raw = $raw[0];
         }
 
-        // Flat array: [lng,lat,lng,lat] → [[lng,lat],[lng,lat]]
-        $coordinates = (isset($raw[0]) && !is_array($raw[0]))
+        $coordinates = (isset($raw[0]) && ! is_array($raw[0]))
             ? array_chunk($raw, 2)
             : $raw;
 
-        // Filter koordinat yang tidak valid (harus tepat 2 elemen numerik)
-        $coordinates = array_values(array_filter($coordinates, function ($point) {
+        return array_values(array_filter($coordinates, function ($point) {
             return is_array($point)
                 && count($point) === 2
                 && is_numeric($point[0])
                 && is_numeric($point[1]);
         }));
+    }
+
+    public function toGeoJson(): array
+    {
+        $coordinates = $this->getNormalizedCoordinates();
 
         return [
             'type' => 'Feature',
@@ -46,6 +49,7 @@ class JalurAngkut extends Model
                 'kelurahan' => $this->kelurahan,
                 'tipe_kendaraan' => $this->tipe_kendaraan,
                 'warna' => $this->warna,
+                'jadwal' => $this->jadwal ?? [],
             ],
             'geometry' => [
                 'type' => 'LineString',

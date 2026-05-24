@@ -96,13 +96,24 @@ const FadeIn = ({
     );
 };
 
-function ChangeView({ center, zoom }: { center: [number, number]; zoom: number }) {
+function ChangeView({
+    center,
+    zoom,
+}: {
+    center: [number, number];
+    zoom: number;
+}) {
     const map = useMap();
     map.setView(center, zoom);
     return null;
 }
 
-type LaporanStatus = 'menunggu' | 'diverifikasi' | 'diproses' | 'selesai' | 'ditolak';
+type LaporanStatus =
+    | 'menunggu'
+    | 'diverifikasi'
+    | 'diproses'
+    | 'selesai'
+    | 'ditolak';
 
 type Props = {
     laporan: {
@@ -135,7 +146,10 @@ type Props = {
     };
 };
 
-const statusMeta: Record<LaporanStatus, { label: string; pill: string; dot: string }> = {
+const statusMeta: Record<
+    LaporanStatus,
+    { label: string; pill: string; dot: string }
+> = {
     menunggu: {
         label: 'Menunggu',
         pill: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
@@ -163,7 +177,9 @@ const statusMeta: Record<LaporanStatus, { label: string; pill: string; dot: stri
     },
 };
 
-function toNumberOrNull(input: string | number | null | undefined): number | null {
+function toNumberOrNull(
+    input: string | number | null | undefined,
+): number | null {
     if (input === null || input === undefined) return null;
     if (typeof input === 'number') return Number.isFinite(input) ? input : null;
     const n = Number(String(input).trim());
@@ -194,7 +210,17 @@ function forwardStatus(current: LaporanStatus): LaporanStatus | null {
     return m[current] ?? null;
 }
 
-function isStatusSelectable(current: LaporanStatus, target: LaporanStatus): boolean {
+function fotoSrc(path: string): string {
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+        return path;
+    }
+    return `/storage/${path}`;
+}
+
+function isStatusSelectable(
+    current: LaporanStatus,
+    target: LaporanStatus,
+): boolean {
     if (current === 'selesai' || current === 'ditolak') return false;
     if (target === current) return false;
     if (target === 'ditolak') return true;
@@ -204,7 +230,8 @@ function isStatusSelectable(current: LaporanStatus, target: LaporanStatus): bool
 export default function AdminLaporanShow({ laporan }: Props) {
     const page = usePage();
     const flash = (page.props as { flash?: { success?: string } }).flash;
-    const errors = (page.props as { errors?: Record<string, string> }).errors ?? {};
+    const errors =
+        (page.props as { errors?: Record<string, string> }).errors ?? {};
     const displayId = `REP-${String(laporan.id_laporan).padStart(5, '0')}`;
     const lat = toNumberOrNull(laporan.latitude);
     const lng = toNumberOrNull(laporan.longitude);
@@ -222,23 +249,28 @@ export default function AdminLaporanShow({ laporan }: Props) {
         return arr.length ? arr[arr.length - 1] : null;
     }, [laporan.tindak_lanjut]);
 
-    const terminal = laporan.status === 'selesai' || laporan.status === 'ditolak';
+    const terminal =
+        laporan.status === 'selesai' || laporan.status === 'ditolak';
 
     const defaultNextStatus = useMemo(() => {
         if (terminal) return laporan.status;
         const forward = forwardStatus(laporan.status);
-        if (forward && isStatusSelectable(laporan.status, forward)) return forward;
+        if (forward && isStatusSelectable(laporan.status, forward))
+            return forward;
         if (isStatusSelectable(laporan.status, 'ditolak')) return 'ditolak';
         return laporan.status;
     }, [terminal, laporan.status]);
 
-    const [nextStatus, setNextStatus] = useState<LaporanStatus>(defaultNextStatus);
+    const [nextStatus, setNextStatus] =
+        useState<LaporanStatus>(defaultNextStatus);
     const [catatan, setCatatan] = useState('');
     const [fotoBuktiFiles, setFotoBuktiFiles] = useState<File[]>([]);
     const [fotoInputKey, setFotoInputKey] = useState(0);
     const [saving, setSaving] = useState(false);
 
-    const [selectedImage, setSelectedImage] = useState<string | null>(images[0] ?? null);
+    const [selectedImage, setSelectedImage] = useState<string | null>(
+        images[0] ?? null,
+    );
     const [activeImage, setActiveImage] = useState<string | null>(null);
     const imagesKey = images.join('|');
 
@@ -266,7 +298,9 @@ export default function AdminLaporanShow({ laporan }: Props) {
         fd.append('status', nextStatus);
         if (catatan.trim()) fd.append('catatan', catatan.trim());
         if (nextStatus === 'selesai') {
-            fotoBuktiFiles.forEach((file) => fd.append('foto_penanganan[]', file));
+            fotoBuktiFiles.forEach((file) =>
+                fd.append('foto_penanganan[]', file),
+            );
         }
 
         router.post(`/admin/laporan/${laporan.id_laporan}/status`, fd, {
@@ -342,11 +376,18 @@ export default function AdminLaporanShow({ laporan }: Props) {
                                         <div className="space-y-3">
                                             <button
                                                 type="button"
-                                                onClick={() => setActiveImage(selectedImage)}
+                                                onClick={() =>
+                                                    setActiveImage(
+                                                        selectedImage,
+                                                    )
+                                                }
                                                 className="block w-full overflow-hidden rounded-2xl border border-border"
                                             >
                                                 <img
-                                                    src={`/storage/${selectedImage ?? images[0]}`}
+                                                    src={fotoSrc(
+                                                        selectedImage ??
+                                                            images[0],
+                                                    )}
                                                     alt="Foto laporan"
                                                     className="h-[260px] w-full object-cover sm:h-[340px]"
                                                     loading="lazy"
@@ -355,24 +396,33 @@ export default function AdminLaporanShow({ laporan }: Props) {
 
                                             {images.length > 1 ? (
                                                 <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-                                                    {images.slice(0, 12).map((img, idx) => (
-                                                        <button
-                                                            key={`${img}-${idx}`}
-                                                            type="button"
-                                                            onClick={() => setSelectedImage(img)}
-                                                            className={`overflow-hidden rounded-xl border ${
-                                                                img === selectedImage
-                                                                    ? 'border-emerald-500 ring-2 ring-emerald-500/30'
-                                                                    : 'border-border'
-                                                            }`}
-                                                        >
-                                                            <img
-                                                                src={`/storage/${img}`}
-                                                                alt={`Foto ${idx + 1}`}
-                                                                className="h-14 w-full object-cover sm:h-16"
-                                                            />
-                                                        </button>
-                                                    ))}
+                                                    {images
+                                                        .slice(0, 12)
+                                                        .map((img, idx) => (
+                                                            <button
+                                                                key={`${img}-${idx}`}
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    setSelectedImage(
+                                                                        img,
+                                                                    )
+                                                                }
+                                                                className={`overflow-hidden rounded-xl border ${
+                                                                    img ===
+                                                                    selectedImage
+                                                                        ? 'border-emerald-500 ring-2 ring-emerald-500/30'
+                                                                        : 'border-border'
+                                                                }`}
+                                                            >
+                                                                <img
+                                                                    src={fotoSrc(
+                                                                        img,
+                                                                    )}
+                                                                    alt={`Foto ${idx + 1}`}
+                                                                    className="h-14 w-full object-cover sm:h-16"
+                                                                />
+                                                            </button>
+                                                        ))}
                                                 </div>
                                             ) : null}
                                         </div>
@@ -384,7 +434,9 @@ export default function AdminLaporanShow({ laporan }: Props) {
                                 </div>
 
                                 <div className="px-5 pb-6 sm:px-6">
-                                    <h2 className="text-lg font-extrabold text-foreground">Deskripsi Temuan</h2>
+                                    <h2 className="text-lg font-extrabold text-foreground">
+                                        Deskripsi Temuan
+                                    </h2>
                                     <p className="mt-3 text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
                                         {laporan.deskripsi}
                                     </p>
@@ -405,7 +457,9 @@ export default function AdminLaporanShow({ laporan }: Props) {
                                                 icon: Crosshair,
                                                 iconClass:
                                                     'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300',
-                                                value: hasCoords ? `${lat}, ${lng}` : '-',
+                                                value: hasCoords
+                                                    ? `${lat}, ${lng}`
+                                                    : '-',
                                                 valueClass:
                                                     'font-mono text-sm font-semibold text-foreground',
                                             },
@@ -414,7 +468,9 @@ export default function AdminLaporanShow({ laporan }: Props) {
                                                 icon: CalendarDays,
                                                 iconClass:
                                                     'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300',
-                                                value: safeDateLabel(laporan.tanggal_laporan),
+                                                value: safeDateLabel(
+                                                    laporan.tanggal_laporan,
+                                                ),
                                                 valueClass:
                                                     'text-sm font-semibold text-foreground',
                                             },
@@ -423,7 +479,9 @@ export default function AdminLaporanShow({ laporan }: Props) {
                                                 icon: User,
                                                 iconClass:
                                                     'bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300',
-                                                value: laporan.pelapor?.nama ?? '-',
+                                                value:
+                                                    laporan.pelapor?.nama ??
+                                                    '-',
                                                 valueClass:
                                                     'text-sm font-semibold text-foreground',
                                             },
@@ -453,7 +511,11 @@ export default function AdminLaporanShow({ laporan }: Props) {
                                                             <p className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                                                                 {label}
                                                             </p>
-                                                            <p className={`mt-1 ${valueClass}`}>{value}</p>
+                                                            <p
+                                                                className={`mt-1 ${valueClass}`}
+                                                            >
+                                                                {value}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                 </FadeIn>
@@ -484,8 +546,16 @@ export default function AdminLaporanShow({ laporan }: Props) {
                                                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                                                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                                         />
-                                                        <Marker position={[lat, lng]} />
-                                                        <ChangeView center={[lat, lng]} zoom={16} />
+                                                        <Marker
+                                                            position={[
+                                                                lat,
+                                                                lng,
+                                                            ]}
+                                                        />
+                                                        <ChangeView
+                                                            center={[lat, lng]}
+                                                            zoom={16}
+                                                        />
                                                     </MapContainer>
                                                 </div>
                                             </div>
@@ -503,10 +573,12 @@ export default function AdminLaporanShow({ laporan }: Props) {
                         }}
                     >
                         <DialogContent className="max-w-5xl p-0">
-                            <DialogTitle className="sr-only">Foto laporan</DialogTitle>
+                            <DialogTitle className="sr-only">
+                                Foto laporan
+                            </DialogTitle>
                             {activeImage ? (
                                 <img
-                                    src={`/storage/${activeImage}`}
+                                    src={fotoSrc(activeImage)}
                                     alt="Foto laporan"
                                     className="max-h-[80vh] w-full rounded-lg object-contain"
                                 />
@@ -516,15 +588,21 @@ export default function AdminLaporanShow({ laporan }: Props) {
 
                     <div className="space-y-6 lg:col-span-1">
                         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-                            <h3 className="text-lg font-extrabold text-foreground">Update Status</h3>
+                            <h3 className="text-lg font-extrabold text-foreground">
+                                Update Status
+                            </h3>
                             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                                Status maju mengikuti urutan: Menunggu → Diverifikasi → Diproses → Selesai. Anda
-                                selalu dapat menolak laporan pada tahap apa pun sebelum selesai. Untuk Selesai,
-                                unggah foto bukti pembersihan (disimpan di tindak lanjut).
+                                Status maju mengikuti urutan: Menunggu →
+                                Diverifikasi → Diproses → Selesai. Anda selalu
+                                dapat menolak laporan pada tahap apa pun sebelum
+                                selesai. Untuk Selesai, unggah foto bukti
+                                pembersihan (disimpan di tindak lanjut).
                             </p>
 
                             {errors.status ? (
-                                <p className="mt-3 text-xs text-red-600 dark:text-red-400">{errors.status}</p>
+                                <p className="mt-3 text-xs text-red-600 dark:text-red-400">
+                                    {errors.status}
+                                </p>
                             ) : null}
 
                             {terminal ? (
@@ -544,12 +622,21 @@ export default function AdminLaporanShow({ laporan }: Props) {
                                         <Select
                                             value={nextStatus}
                                             onValueChange={(v) => {
-                                                const target = v as LaporanStatus;
-                                                if (!isStatusSelectable(laporan.status, target)) return;
+                                                const target =
+                                                    v as LaporanStatus;
+                                                if (
+                                                    !isStatusSelectable(
+                                                        laporan.status,
+                                                        target,
+                                                    )
+                                                )
+                                                    return;
                                                 setNextStatus(target);
                                                 if (target !== 'selesai') {
                                                     setFotoBuktiFiles([]);
-                                                    setFotoInputKey((k) => k + 1);
+                                                    setFotoInputKey(
+                                                        (k) => k + 1,
+                                                    );
                                                 }
                                             }}
                                         >
@@ -561,16 +648,21 @@ export default function AdminLaporanShow({ laporan }: Props) {
                                                 className="min-w-[var(--radix-select-trigger-width)]"
                                             >
                                                 {ALL_STATUSES.map((value) => {
-                                                    const selectable = isStatusSelectable(
-                                                        laporan.status,
-                                                        value,
-                                                    );
-                                                    const isCurrent = value === laporan.status;
+                                                    const selectable =
+                                                        isStatusSelectable(
+                                                            laporan.status,
+                                                            value,
+                                                        );
+                                                    const isCurrent =
+                                                        value ===
+                                                        laporan.status;
                                                     return (
                                                         <SelectItem
                                                             key={value}
                                                             value={value}
-                                                            disabled={!selectable}
+                                                            disabled={
+                                                                !selectable
+                                                            }
                                                             className={
                                                                 !selectable
                                                                     ? 'cursor-not-allowed opacity-40 blur-[0.3px] saturate-50'
@@ -583,8 +675,14 @@ export default function AdminLaporanShow({ laporan }: Props) {
                                                                     aria-hidden
                                                                 />
                                                                 <span>
-                                                                    {statusMeta[value].label}
-                                                                    {isCurrent ? ' (saat ini)' : ''}
+                                                                    {
+                                                                        statusMeta[
+                                                                            value
+                                                                        ].label
+                                                                    }
+                                                                    {isCurrent
+                                                                        ? ' (saat ini)'
+                                                                        : ''}
                                                                 </span>
                                                             </span>
                                                         </SelectItem>
@@ -602,7 +700,11 @@ export default function AdminLaporanShow({ laporan }: Props) {
                                                 <span
                                                     className={`ml-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${statusMeta[laporan.status].pill}`}
                                                 >
-                                                    {statusMeta[laporan.status].label}
+                                                    {
+                                                        statusMeta[
+                                                            laporan.status
+                                                        ].label
+                                                    }
                                                 </span>
                                             </span>
                                         </div>
@@ -615,7 +717,9 @@ export default function AdminLaporanShow({ laporan }: Props) {
                                                 className="mb-1 block text-xs font-medium text-muted-foreground"
                                             >
                                                 Foto bukti pembersihan{' '}
-                                                <span className="text-red-600">*</span>
+                                                <span className="text-red-600">
+                                                    *
+                                                </span>
                                                 <span className="font-normal text-muted-foreground">
                                                     {' '}
                                                     (bisa lebih dari satu)
@@ -630,13 +734,17 @@ export default function AdminLaporanShow({ laporan }: Props) {
                                                 className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-800 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-emerald-900"
                                                 onChange={(e) => {
                                                     setFotoBuktiFiles(
-                                                        Array.from(e.target.files ?? []),
+                                                        Array.from(
+                                                            e.target.files ??
+                                                                [],
+                                                        ),
                                                     );
                                                 }}
                                             />
                                             {fotoBuktiFiles.length > 0 ? (
                                                 <p className="mt-2 text-xs text-muted-foreground">
-                                                    {fotoBuktiFiles.length} file dipilih
+                                                    {fotoBuktiFiles.length} file
+                                                    dipilih
                                                 </p>
                                             ) : null}
                                             {errors.foto_penanganan ? (
@@ -653,7 +761,9 @@ export default function AdminLaporanShow({ laporan }: Props) {
                                         </label>
                                         <Textarea
                                             value={catatan}
-                                            onChange={(e) => setCatatan(e.target.value)}
+                                            onChange={(e) =>
+                                                setCatatan(e.target.value)
+                                            }
                                             placeholder="Tambahkan catatan (opsional)..."
                                             className="min-h-[110px] resize-none"
                                         />
@@ -679,64 +789,87 @@ export default function AdminLaporanShow({ laporan }: Props) {
                         </div>
 
                         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-                            <h3 className="text-lg font-extrabold text-foreground">Petugas Lapangan</h3>
+                            <h3 className="text-lg font-extrabold text-foreground">
+                                Petugas Lapangan
+                            </h3>
                             <div className="mt-4 rounded-2xl border border-border bg-background p-4">
                                 <p className="text-sm font-semibold text-foreground">
-                                    {latestTindakLanjut?.admin ?? 'Belum ditugaskan'}
+                                    {latestTindakLanjut?.admin ??
+                                        'Belum ditugaskan'}
                                 </p>
                                 <p className="mt-1 text-xs text-muted-foreground">
-                                    {latestTindakLanjut?.catatan ?? 'Belum ada catatan tindak lanjut.'}
+                                    {latestTindakLanjut?.catatan ??
+                                        'Belum ada catatan tindak lanjut.'}
                                 </p>
                                 <div className="mt-3 inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-[11px] font-semibold text-muted-foreground">
-                                    Estimasi Selesai: {latestTindakLanjut?.tanggal ?? '-'}
+                                    Estimasi Selesai:{' '}
+                                    {latestTindakLanjut?.tanggal ?? '-'}
                                 </div>
                             </div>
                         </div>
 
                         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-                            <h3 className="text-lg font-extrabold text-foreground">Timeline Riwayat</h3>
+                            <h3 className="text-lg font-extrabold text-foreground">
+                                Timeline Riwayat
+                            </h3>
                             <div className="mt-5 space-y-5">
-                                {(laporan.riwayat_status?.length ? [...laporan.riwayat_status].reverse() : []).map(
-                                    (r, idx, arr) => {
-                                        const s = (r.status_baru ?? 'menunggu') as LaporanStatus | string;
-                                        const known = s in statusMeta ? (s as LaporanStatus) : null;
-                                        return (
-                                            <div key={`${r.tanggal}-${idx}`} className="relative pl-6">
-                                                <span
-                                                    className={`absolute top-1.5 left-0 h-3 w-3 rounded-full ${known ? statusMeta[known].dot : 'bg-slate-300 dark:bg-slate-600'}`}
-                                                />
-                                                {idx !== arr.length - 1 ? (
-                                                    <span className="absolute top-5 left-1.5 h-[calc(100%_-_10px)] w-px bg-border" />
-                                                ) : null}
+                                {(laporan.riwayat_status?.length
+                                    ? [...laporan.riwayat_status].reverse()
+                                    : []
+                                ).map((r, idx, arr) => {
+                                    const s = (r.status_baru ?? 'menunggu') as
+                                        | LaporanStatus
+                                        | string;
+                                    const known =
+                                        s in statusMeta
+                                            ? (s as LaporanStatus)
+                                            : null;
+                                    return (
+                                        <div
+                                            key={`${r.tanggal}-${idx}`}
+                                            className="relative pl-6"
+                                        >
+                                            <span
+                                                className={`absolute top-1.5 left-0 h-3 w-3 rounded-full ${known ? statusMeta[known].dot : 'bg-slate-300 dark:bg-slate-600'}`}
+                                            />
+                                            {idx !== arr.length - 1 ? (
+                                                <span className="absolute top-5 left-1.5 h-[calc(100%_-_10px)] w-px bg-border" />
+                                            ) : null}
 
-                                                <div className="rounded-2xl border border-border bg-background p-4">
-                                                    <div className="flex items-start justify-between gap-3">
-                                                        <p className="text-xs font-bold text-foreground">
-                                                            Status diubah ke{' '}
-                                                            <span className="capitalize">
-                                                                {known ? statusMeta[known].label : String(s)}
-                                                            </span>
-                                                        </p>
-                                                        <p className="text-[11px] text-muted-foreground">
-                                                            {r.tanggal ?? ''}
-                                                        </p>
-                                                    </div>
-                                                    {r.catatan ? (
-                                                        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                                                            &ldquo;{r.catatan}&rdquo;
-                                                        </p>
-                                                    ) : null}
-                                                    <p className="mt-2 text-[11px] text-muted-foreground">
-                                                        Oleh {r.admin ?? 'Admin'}
+                                            <div className="rounded-2xl border border-border bg-background p-4">
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <p className="text-xs font-bold text-foreground">
+                                                        Status diubah ke{' '}
+                                                        <span className="capitalize">
+                                                            {known
+                                                                ? statusMeta[
+                                                                      known
+                                                                  ].label
+                                                                : String(s)}
+                                                        </span>
+                                                    </p>
+                                                    <p className="text-[11px] text-muted-foreground">
+                                                        {r.tanggal ?? ''}
                                                     </p>
                                                 </div>
+                                                {r.catatan ? (
+                                                    <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                                                        &ldquo;{r.catatan}
+                                                        &rdquo;
+                                                    </p>
+                                                ) : null}
+                                                <p className="mt-2 text-[11px] text-muted-foreground">
+                                                    Oleh {r.admin ?? 'Admin'}
+                                                </p>
                                             </div>
-                                        );
-                                    },
-                                )}
+                                        </div>
+                                    );
+                                })}
 
                                 {!laporan.riwayat_status?.length ? (
-                                    <p className="text-sm text-muted-foreground">Belum ada riwayat status.</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Belum ada riwayat status.
+                                    </p>
                                 ) : null}
                             </div>
                         </div>

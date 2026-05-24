@@ -812,6 +812,7 @@ export default function JalurAngkut() {
 JalurAngkut.layout = {
     breadcrumbs: [
         { title: 'Dashboard', href: '/admin/dashboard' },
-        { title: 'Jalur Angkut', href: '#' },
+        { title: 'Jalur Angkut', href: '/admin/jalur' },
+        { title: 'Peta Jalur', href: '#' },
     ],
 };

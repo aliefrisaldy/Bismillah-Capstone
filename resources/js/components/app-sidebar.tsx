@@ -38,7 +38,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Jalur Angkut',
-        href: '/admin/jalur-angkut',
+        href: '/admin/jalur',
         icon: Route,
     },
 ];
