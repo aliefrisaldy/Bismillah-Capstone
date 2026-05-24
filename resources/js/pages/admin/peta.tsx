@@ -575,11 +575,15 @@ function KelurahanPolygonLayer({
         }
 
         return () => {
-            if (map.getLayer(KELURAHAN_BORDER))
-                map.removeLayer(KELURAHAN_BORDER);
-            if (map.getLayer(KELURAHAN_FILL)) map.removeLayer(KELURAHAN_FILL);
-            if (map.getSource(KELURAHAN_SOURCE))
-                map.removeSource(KELURAHAN_SOURCE);
+            if (!map || (map as any)._removed) return;
+            try {
+                if (map.getLayer(KELURAHAN_BORDER))
+                    map.removeLayer(KELURAHAN_BORDER);
+                if (map.getLayer(KELURAHAN_FILL))
+                    map.removeLayer(KELURAHAN_FILL);
+                if (map.getSource(KELURAHAN_SOURCE))
+                    map.removeSource(KELURAHAN_SOURCE);
+            } catch {}
         };
     }, [map, isLoaded, geojson, selected]);
     return null;
@@ -734,12 +738,16 @@ function JalurGeoJsonLayer({
 
         return () => {
             clearHover();
+            if (!map || (map as any)._removed) return;
+
             map.off('click', JALUR_LAYER, handleClick);
             map.off('mouseenter', JALUR_LAYER, handleEnter);
             map.off('mouseleave', JALUR_LAYER, handleLeave);
             map.off('mouseout', handleLeave);
-            if (map.getLayer(JALUR_LAYER)) map.removeLayer(JALUR_LAYER);
-            if (map.getSource(JALUR_SOURCE)) map.removeSource(JALUR_SOURCE);
+            try {
+                if (map.getLayer(JALUR_LAYER)) map.removeLayer(JALUR_LAYER);
+                if (map.getSource(JALUR_SOURCE)) map.removeSource(JALUR_SOURCE);
+            } catch {}
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [map, isLoaded, clearHover]);
@@ -1199,6 +1207,32 @@ export default function Peta() {
     useEffect(() => {
         setFilterKelurahan('');
     }, [filterKecamatan]);
+
+    useEffect(() => {
+        if (!filterKecamatan || !kelurahanGeoJson || !mapRef.current) return;
+
+        const features = kelurahanGeoJson.features.filter(
+            (f) => f.properties.kecamatan === filterKecamatan,
+        );
+        if (features.length === 0) return;
+
+        const bounds = new maplibregl.LngLatBounds();
+        features.forEach((f) => {
+            const coords =
+                f.geometry.type === 'Polygon'
+                    ? f.geometry.coordinates[0]
+                    : f.geometry.coordinates[0][0]; // MultiPolygon
+            coords.forEach(([lng, lat]) => bounds.extend([lng, lat]));
+        });
+
+        if (!bounds.isEmpty()) {
+            mapRef.current.fitBounds(bounds, {
+                padding: 80,
+                maxZoom: 14,
+                duration: 700,
+            });
+        }
+    }, [filterKecamatan, kelurahanGeoJson]);
 
     // Tutup jalur popup saat filter berubah
     useEffect(() => {

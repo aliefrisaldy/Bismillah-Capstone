@@ -713,17 +713,21 @@ export function MapRoute({
             if (onMouseLeave) map.on("mouseleave", lid, onMouseLeave);
         }
 
+
         return () => {
-            if (interactive) {
-                if (onClick) map.off("click", lid, onClick);
-                if (onMouseEnter) map.off("mouseenter", lid, onMouseEnter);
-                if (onMouseLeave) map.off("mouseleave", lid, onMouseLeave);
-            }
-            if (map.getLayer(lid)) map.removeLayer(lid);
-            if (map.getSource(sid)) map.removeSource(sid);
+            if (!map || (map as any)._removed) return;
+            try {
+                if (interactive) {
+                    if (onClick) map.off("click", lid, onClick);
+                    if (onMouseEnter) map.off("mouseenter", lid, onMouseEnter);
+                    if (onMouseLeave) map.off("mouseleave", lid, onMouseLeave);
+                }   
+                if (map.getLayer(lid)) map.removeLayer(lid);
+                if (map.getSource(sid)) map.removeSource(sid);
+            } catch {}
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [map, isLoaded]);
+        }, [map, isLoaded]);
 
     // Update coordinates
     useEffect(() => {

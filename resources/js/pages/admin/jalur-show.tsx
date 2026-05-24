@@ -78,6 +78,10 @@ function RouteFitBounds({
         if (!bounds.isEmpty()) {
             map.fitBounds(bounds, { padding: 48, maxZoom: 15, duration: 500 });
         }
+
+        return () => {
+            done.current = false;
+        };
     }, [map, isLoaded, coordinates]);
 
     return null;

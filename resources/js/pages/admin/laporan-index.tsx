@@ -772,6 +772,7 @@ export default function AdminLaporanIndex({ stats, laporan, filters }: Props) {
     );
 }
 
+
 AdminLaporanIndex.layout = {
     breadcrumbs: [
         {
