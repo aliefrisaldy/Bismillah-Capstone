@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import L from 'leaflet';
@@ -56,7 +56,8 @@ type LaporanDetail = {
     tanggal_diperbarui: string;
     latitude?: string | number | null;
     longitude?: string | number | null;
-    pelapor?: { name?: string | null } | null;
+    nama_pelapor?: string | null;
+    no_telpon_pelapor?: string | null;
 };
 
 type Props = {
@@ -156,7 +157,6 @@ function ChangeView({
 }
 
 export default function LaporanShow({ laporan, riwayat }: Props) {
-    const { auth } = usePage().props as any;
     const displayId =
         laporan.kode_laporan ??
         `PLC-${String(laporan.id_laporan).padStart(4, '0')}`;
@@ -352,9 +352,8 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                                                 iconClass:
                                                     'bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300',
                                                 value:
-                                                    laporan.pelapor?.name ??
-                                                    auth?.user?.name ??
-                                                    'Masyarakat Umum',
+                                                    laporan.nama_pelapor ??
+                                                    'Masyarakat',
                                                 valueClass:
                                                     'text-sm font-semibold text-foreground',
                                             },

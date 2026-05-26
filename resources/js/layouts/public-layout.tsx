@@ -1,19 +1,9 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
+import { Moon, Sun, User } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { UserMenuContent } from '@/components/user-menu-content';
-import { useInitials } from '@/hooks/use-initials';
-
-type Auth = {
-    user: { name: string; email: string; avatar?: string } | null;
-};
+import { useAppearance } from '@/hooks/use-appearance';
 
 const NAV_LINKS = [
     { href: '/',                   label: 'Beranda',    exact: true  },
@@ -24,10 +14,13 @@ const NAV_LINKS = [
 ];
 
 export default function PublicLayout({ children }: { children: ReactNode }) {
-    const { auth } = usePage<{ auth: Auth }>().props;
-    const currentUrl = usePage().url;
-    const getInitials = useInitials();
+    const currentUrl = window.location.pathname;
+    const { appearance, updateAppearance } = useAppearance();
     const [menuOpen, setMenuOpen] = useState(false);
+
+    const toggleTheme = () => {
+        updateAppearance(appearance === 'dark' ? 'light' : 'dark');
+    };
 
     const isActive = (href: string, exact: boolean) =>
         exact ? currentUrl === href : currentUrl.startsWith(href);
@@ -67,44 +60,22 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {auth?.user ? (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        className="size-10 overflow-hidden rounded-full p-0 ring-2 ring-border transition-all duration-200 hover:ring-foreground/30"
-                                    >
-                                        <Avatar className="size-full">
-                                            <AvatarImage
-                                                src={auth?.user?.avatar}
-                                                alt={auth?.user?.name}
-                                            />
-                                            <AvatarFallback className="bg-emerald-800 text-white">
-                                                {getInitials(auth?.user?.name ?? '')}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56" align="end">
-                                    {auth?.user && <UserMenuContent user={auth.user} />}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        ) : (
-                            <div className="hidden items-center gap-3 md:flex">
-                                <Link
-                                    href="/login"
-                                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                                >
-                                    Masuk
-                                </Link>
-                                <Link
-                                    href="/register"
-                                    className="rounded-full bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
-                                >
-                                    Daftar
-                                </Link>
-                            </div>
-                        )}
+                        <button
+                            type="button"
+                            onClick={toggleTheme}
+                            className="flex size-10 items-center justify-center rounded-full border border-border/60 bg-background/60 text-foreground backdrop-blur transition-colors hover:bg-accent"
+                            aria-label="Toggle theme"
+                        >
+                            {appearance === 'dark' ? (
+                                <Sun className="h-5 w-5" />
+                            ) : (
+                                <Moon className="h-5 w-5" />
+                            )}
+                        </button>
+
+                        <div className="flex size-10 items-center justify-center rounded-full border border-border bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                            <User className="h-5 w-5" />
+                        </div>
 
                         <button
                             type="button"
@@ -140,22 +111,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                                 {label}
                             </Link>
                         ))}
-                        {!auth?.user && (
-                            <div className="flex flex-col gap-2 pt-2 border-t border-border">
-                                <Link
-                                    href="/login"
-                                    className="text-sm text-center text-muted-foreground"
-                                >
-                                    Masuk
-                                </Link>
-                                <Link
-                                    href="/register"
-                                    className="rounded-full bg-green-600 px-4 py-2 text-center text-sm font-medium text-white"
-                                >
-                                    Daftar
-                                </Link>
-                            </div>
-                        )}
+
                     </div>
                 )}
             </header>

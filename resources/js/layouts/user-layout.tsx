@@ -1,15 +1,9 @@
 import { Link, usePage } from '@inertiajs/react';
+import { Moon, Sun, User } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { UserMenuContent } from '@/components/user-menu-content';
-import { useInitials } from '@/hooks/use-initials';
+import { useAppearance } from '@/hooks/use-appearance';
 
 // ── FadeIn ────────────────────────────────────────────────
 export const FadeIn = ({
@@ -79,22 +73,24 @@ observer.unobserve(currentRef);
 
 // ── Nav links ─────────────────────────────────────────────
 const NAV_LINKS = [
-    { href: '/',                   label: 'Beranda',         exact: true  },
-    { href: '/user/laporan',       label: 'Laporan Saya', exact: false },
-    { href: '/user/laporan/buat',  label: 'Buat Laporan', exact: true  },
-    { href: '/user/peta',          label: 'Peta Laporan', exact: false },
-    { href: '/user/jalur-angkut',  label: 'Jalur Angkut', exact: false },
+    { href: '/',                   label: 'Beranda',    match: (url: string) => url === '/' },
+    { href: '/user/laporan',       label: 'Laporan Saya', match: (url: string) => url === '/user/laporan' || (url.startsWith('/user/laporan') && !url.startsWith('/user/laporan/buat')) },
+    { href: '/user/laporan/buat',  label: 'Buat Laporan', match: (url: string) => url === '/user/laporan/buat' },
+    { href: '/user/peta',          label: 'Peta Laporan', match: (url: string) => url.startsWith('/user/peta') },
+    { href: '/user/jalur-angkut',  label: 'Jalur Angkut', match: (url: string) => url.startsWith('/user/jalur-angkut') },
 ];
 
 // ── Layout ────────────────────────────────────────────────
 export default function UserLayout({ children }: { children: ReactNode }) {
-    const { auth } = usePage().props as any;
-    const currentUrl = usePage().url;
-    const getInitials = useInitials();
+    const { url } = usePage();
+    const currentUrl = url;
     const [menuOpen, setMenuOpen] = useState(false);
 
-    const isActive = (href: string, exact: boolean) =>
-        exact ? currentUrl === href : currentUrl.startsWith(href);
+    const { appearance, updateAppearance } = useAppearance();
+
+    const toggleTheme = () => {
+        updateAppearance(appearance === 'dark' ? 'light' : 'dark');
+    };
 
     return (
         <div className="min-h-screen bg-background pb-20 font-sans">
@@ -109,8 +105,8 @@ export default function UserLayout({ children }: { children: ReactNode }) {
 
                     {/* Desktop links */}
                     <div className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
-                        {NAV_LINKS.map(({ href, label, exact }) =>
-                            isActive(href, exact) ? (
+                        {NAV_LINKS.map(({ href, label, match }) =>
+                            match(currentUrl) ? (
                                 <Link
                                     key={href}
                                     href={href}
@@ -131,27 +127,22 @@ export default function UserLayout({ children }: { children: ReactNode }) {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    className="size-10 overflow-hidden rounded-full p-0 ring-2 ring-border transition-all duration-200 hover:ring-foreground/30"
-                                >
-                                    <Avatar className="size-full">
-                                        <AvatarImage
-                                            src={auth?.user?.avatar}
-                                            alt={auth?.user?.name}
-                                        />
-                                        <AvatarFallback className="bg-emerald-800 text-white">
-                                            {getInitials(auth?.user?.name ?? '')}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-56" align="end">
-                                {auth?.user && <UserMenuContent user={auth.user} />}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        <button
+                            type="button"
+                            onClick={toggleTheme}
+                            className="flex size-10 items-center justify-center rounded-full border border-border/60 bg-background/60 text-foreground backdrop-blur transition-colors hover:bg-accent"
+                            aria-label="Toggle theme"
+                        >
+                            {appearance === 'dark' ? (
+                                <Sun className="h-5 w-5" />
+                            ) : (
+                                <Moon className="h-5 w-5" />
+                            )}
+                        </button>
+
+                        <div className="flex size-10 items-center justify-center rounded-full border border-border bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                            <User className="h-5 w-5" />
+                        </div>
 
                         <button
                             type="button"
@@ -173,13 +164,13 @@ export default function UserLayout({ children }: { children: ReactNode }) {
                 {/* Mobile menu */}
                 {menuOpen && (
                     <div className="border-t border-border/50 px-6 py-4 md:hidden flex flex-col gap-4">
-                        {NAV_LINKS.map(({ href, label, exact }) => (
+                        {NAV_LINKS.map(({ href, label, match }) => (
                             <Link
                                 key={href}
                                 href={href}
                                 onClick={() => setMenuOpen(false)}
                                 className={
-                                    isActive(href, exact)
+                                    match(currentUrl)
                                         ? 'text-sm font-semibold text-foreground'
                                         : 'text-sm text-muted-foreground'
                                 }

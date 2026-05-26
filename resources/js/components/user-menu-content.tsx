@@ -1,14 +1,13 @@
-import { Link, router, usePage } from '@inertiajs/react';
-import { LogOut, Settings } from 'lucide-react';
+import { router } from '@inertiajs/react';
+import { LogOut, Moon, Sun } from 'lucide-react';
 import {
-    DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { UserInfo } from '@/components/user-info';
+import { useAppearance } from '@/hooks/use-appearance';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
-import { edit } from '@/routes/profile';
 import type { User } from '@/types';
 
 type Props = {
@@ -17,19 +16,16 @@ type Props = {
 
 export function UserMenuContent({ user }: Props) {
     const cleanup = useMobileNavigation();
-    const { url } = usePage();
-
-    const isAdminRoute = url.startsWith('/admin') || url === '/dashboard';
+    const { appearance, updateAppearance } = useAppearance();
 
     const handleLogout = () => {
         cleanup();
         router.flushAll();
+        router.post('/admin/logout');
+    };
 
-        if (isAdminRoute) {
-            router.post('/admin/logout');
-        } else {
-            router.post('/logout');
-        }
+    const toggleTheme = () => {
+        updateAppearance(appearance === 'dark' ? 'light' : 'dark');
     };
 
     return (
@@ -40,19 +36,19 @@ export function UserMenuContent({ user }: Props) {
                 </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-                <DropdownMenuItem asChild>
-                    <Link
-                        className="block w-full cursor-pointer"
-                        href={edit()}
-                        prefetch
-                        onClick={cleanup}
-                    >
-                        <Settings className="mr-2" />
-                        Settings
-                    </Link>
-                </DropdownMenuItem>
-            </DropdownMenuGroup>
+            <DropdownMenuItem asChild>
+                <button
+                    className="flex w-full cursor-pointer items-center"
+                    onClick={toggleTheme}
+                >
+                    {appearance === 'dark' ? (
+                        <Sun className="mr-2" />
+                    ) : (
+                        <Moon className="mr-2" />
+                    )}
+                    {appearance === 'dark' ? 'Mode Terang' : 'Mode Gelap'}
+                </button>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
                 <button

@@ -1,34 +1,17 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Laravel\Fortify\Features;
-use App\Http\Controllers\Auth\AdminAuthController;
-use App\Http\Controllers\User\LaporanController as UserLaporanController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\JalurAngkutController;
 use App\Http\Controllers\Admin\LaporanController as AdminLaporanController;
 use App\Http\Controllers\Admin\PetaController;
-use App\Http\Controllers\Admin\JalurAngkutController;
-use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Admin\TPSResmiController;
+use App\Http\Controllers\Auth\AdminAuthController;
+use App\Http\Controllers\User\LaporanController as UserLaporanController;
 use App\Http\Controllers\User\WargaPetaController;
-
-
+use Illuminate\Support\Facades\Route;
 
 // ─── LANDING PAGE ─────────────────────────────────────────
-Route::inertia('/', 'welcome', [
-    'canRegister' => Features::enabled(Features::registration()),
-])->name('home');
-
-
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', function () {
-        return redirect('/user/laporan');
-    })->name('dashboard');
-});
-
-require __DIR__ . '/settings.php';
-
-
+Route::inertia('/', 'welcome')->name('home');
 
 // ─── AUTH ADMIN ───────────────────────────────────────────
 Route::get('/admin/login', [AdminAuthController::class, 'showLogin'])
@@ -37,12 +20,8 @@ Route::post('/admin/login', [AdminAuthController::class, 'login']);
 Route::post('/admin/logout', [AdminAuthController::class, 'logout'])
     ->name('admin.logout');
 
-// Google OAuth
-Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google');
-Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
-
-// ─── HALAMAN USER (protected) ─────────────────────────────
-Route::prefix('user')->name('user.')->middleware('auth')->group(function () {
+// ─── HALAMAN USER (publik) ────────────────────────────────
+Route::prefix('user')->name('user.')->group(function () {
     Route::get('dashboard', [UserLaporanController::class, 'index'])->name('dashboard');
     Route::get('laporan', [UserLaporanController::class, 'index'])->name('laporan.index');
     Route::get('laporan/buat', [UserLaporanController::class, 'create'])->name('laporan.create');
@@ -60,7 +39,6 @@ Route::prefix('user')->name('user.')->middleware('auth')->group(function () {
     // TPS Resmi (hanya aktif, read-only untuk warga)
     Route::get('tps-resmi/data', [WargaPetaController::class, 'tpsData'])->name('tps-resmi.data');
 });
-
 
 // ─── HALAMAN ADMIN (protected) ────────────────────────────
 Route::prefix('admin')->name('admin.')->middleware('auth.admin')->group(function () {
@@ -86,9 +64,9 @@ Route::prefix('admin')->name('admin.')->middleware('auth.admin')->group(function
     Route::patch('/jalur-angkut/{id}/toggle', [JalurAngkutController::class, 'toggleAktif']);
     Route::get('/jalur-angkut/kelurahans', [JalurAngkutController::class, 'kelurahans']);
 
-    Route::get('/tps-resmi/data', [TpsResmiController::class, 'data'])->name('tps-resmi.data');
-    Route::post('/tps-resmi', [TpsResmiController::class, 'store'])->name('tps-resmi.store');
-    Route::delete('/tps-resmi/{id}', [TpsResmiController::class, 'destroy'])->name('tps-resmi.destroy');
-    Route::get('/tps-resmi', [TpsResmiController::class, 'index'])->name('tps-resmi.index');
-    Route::patch('/tps-resmi/{id}/toggle', [TpsResmiController::class, 'toggleAktif'])->name('tps-resmi.toggle');
+    Route::get('/tps-resmi/data', [TPSResmiController::class, 'data'])->name('tps-resmi.data');
+    Route::post('/tps-resmi', [TPSResmiController::class, 'store'])->name('tps-resmi.store');
+    Route::delete('/tps-resmi/{id}', [TPSResmiController::class, 'destroy'])->name('tps-resmi.destroy');
+    Route::get('/tps-resmi', [TPSResmiController::class, 'index'])->name('tps-resmi.index');
+    Route::patch('/tps-resmi/{id}/toggle', [TPSResmiController::class, 'toggleAktif'])->name('tps-resmi.toggle');
 });

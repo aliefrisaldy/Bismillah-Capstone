@@ -10,7 +10,8 @@ import {
     MapPin,
     CheckCircle2,
     Eye,
-    Users,
+    User,
+    Phone,
     UploadCloud,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -279,6 +280,52 @@ return;
                                 ) : null}
                             </div>
 
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                    <label
+                                        htmlFor="nama"
+                                        className="flex items-center gap-2 text-sm font-semibold text-foreground"
+                                    >
+                                        <User className="h-5 w-5 text-emerald-600" />
+                                        Nama Lengkap
+                                    </label>
+                                    <Input
+                                        id="nama"
+                                        name="nama"
+                                        placeholder="Masukkan nama lengkap"
+                                        required
+                                        className="rounded-xl"
+                                    />
+                                    {error.nama && (
+                                        <p className="text-xs font-medium text-destructive">
+                                            {error.nama}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="space-y-2">
+                                    <label
+                                        htmlFor="no_telpon"
+                                        className="flex items-center gap-2 text-sm font-semibold text-foreground"
+                                    >
+                                        <Phone className="h-5 w-5 text-emerald-600" />
+                                        No. Telepon
+                                    </label>
+                                    <Input
+                                        id="no_telpon"
+                                        name="no_telpon"
+                                        type="tel"
+                                        placeholder="Contoh: 08123456789"
+                                        required
+                                        className="rounded-xl"
+                                    />
+                                    {error.no_telpon && (
+                                        <p className="text-xs font-medium text-destructive">
+                                            {error.no_telpon}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
                             {/* Deskripsi Kondisi */}
                             <div className="space-y-4">
                                 <div className="flex items-center gap-2">
@@ -456,7 +503,7 @@ return;
                             delay: 200,
                         },
                         {
-                            icon: Users,
+                            icon: User,
                             title: 'Aksi Bersama',
                             desc: 'Partisipasi Anda sangat berarti untuk mewujudkan Palu sebagai kota bersih dan nyaman.',
                             delay: 300,

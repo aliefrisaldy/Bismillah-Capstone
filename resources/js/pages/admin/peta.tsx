@@ -1963,7 +1963,7 @@ export default function Peta() {
                         </SelectTrigger>
                         <SelectContent
                             align="start"
-                            className="min-w-[var(--radix-select-trigger-width)] rounded-xl border-border/80 p-1.5 shadow-lg dark:border-sidebar-border"
+                            className="z-[9999] min-w-[var(--radix-select-trigger-width)] rounded-xl border-border/80 p-1.5 shadow-lg dark:border-sidebar-border"
                         >
                             <SelectItem
                                 value="all"

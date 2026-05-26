@@ -3,30 +3,28 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Laporan;
-use App\Models\TindakLanjut;
-use App\Models\RiwayatStatus;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
-use App\Services\FonnteService;
-use Illuminate\Support\Facades\Log;
 use App\Jobs\KirimNotifikasiWa;
+use App\Models\Laporan;
+use App\Models\RiwayatStatus;
+use App\Models\TindakLanjut;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class LaporanController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Laporan::with('user')->orderByDesc('tanggal_laporan');
+        $query = Laporan::orderByDesc('tanggal_laporan');
 
         if ($request->filled('q')) {
             $q = trim((string) $request->q);
             $query->where(function ($sub) use ($q) {
-                $sub->when(is_numeric($q), fn($s) => $s->orWhere('id_laporan', (int) $q))
-                    ->orWhere('alamat', 'like', '%' . $q . '%')
-                    ->orWhere('deskripsi', 'like', '%' . $q . '%')
-                    ->orWhereHas('user', fn($u) => $u->where('nama', 'like', '%' . $q . '%'));
+                $sub->when(is_numeric($q), fn ($s) => $s->orWhere('id_laporan', (int) $q))
+                    ->orWhere('alamat', 'like', '%'.$q.'%')
+                    ->orWhere('deskripsi', 'like', '%'.$q.'%')
+                    ->orWhere('nama_pelapor', 'like', '%'.$q.'%');
             });
         }
 
@@ -36,8 +34,8 @@ class LaporanController extends Controller
 
         if ($request->filled('dari') && $request->filled('sampai')) {
             $query->whereBetween('tanggal_laporan', [
-                $request->dari . ' 00:00:00',
-                $request->sampai . ' 23:59:59',
+                $request->dari.' 00:00:00',
+                $request->sampai.' 23:59:59',
             ]);
         }
 
@@ -46,7 +44,7 @@ class LaporanController extends Controller
         $partialComponent = (string) $request->header('X-Inertia-Partial-Component', '');
         $partialData = (string) $request->header('X-Inertia-Partial-Data', '');
         $isPartialForThisPage = $partialComponent === 'admin/laporan-index' && $partialData !== '';
-        $wantsStats = !$isPartialForThisPage || str_contains($partialData, 'stats');
+        $wantsStats = ! $isPartialForThisPage || str_contains($partialData, 'stats');
 
         $stats = $wantsStats ? [
             'total' => Laporan::count(),
@@ -57,14 +55,14 @@ class LaporanController extends Controller
             'ditolak' => Laporan::where('status', 'ditolak')->count(),
         ] : null;
 
-        $laporan = $query->paginate(6)->through(fn($item) => [
+        $laporan = $query->paginate(6)->through(fn ($item) => [
             'id_laporan' => $item->id_laporan,
             'foto' => $item->foto,
             'deskripsi' => $item->deskripsi,
             'alamat' => $item->alamat,
             'status' => $item->status,
             'tanggal_laporan' => $item->tanggal_laporan?->format('d M Y H:i'),
-            'pelapor' => $item->user?->nama,
+            'pelapor' => $item->nama_pelapor ?? 'Anonim',
         ]);
 
         return Inertia::render('admin/laporan-index', [
@@ -76,15 +74,15 @@ class LaporanController extends Controller
 
     public function export(Request $request)
     {
-        $query = Laporan::with('user')->orderByDesc('tanggal_laporan');
+        $query = Laporan::orderByDesc('tanggal_laporan');
 
         if ($request->filled('q')) {
             $q = trim((string) $request->q);
             $query->where(function ($sub) use ($q) {
-                $sub->when(is_numeric($q), fn($s) => $s->orWhere('id_laporan', (int) $q))
-                    ->orWhere('alamat', 'like', '%' . $q . '%')
-                    ->orWhere('deskripsi', 'like', '%' . $q . '%')
-                    ->orWhereHas('user', fn($u) => $u->where('nama', 'like', '%' . $q . '%'));
+                $sub->when(is_numeric($q), fn ($s) => $s->orWhere('id_laporan', (int) $q))
+                    ->orWhere('alamat', 'like', '%'.$q.'%')
+                    ->orWhere('deskripsi', 'like', '%'.$q.'%')
+                    ->orWhere('nama_pelapor', 'like', '%'.$q.'%');
             });
         }
 
@@ -94,20 +92,20 @@ class LaporanController extends Controller
 
         if ($request->filled('dari') && $request->filled('sampai')) {
             $query->whereBetween('tanggal_laporan', [
-                $request->dari . ' 00:00:00',
-                $request->sampai . ' 23:59:59',
+                $request->dari.' 00:00:00',
+                $request->sampai.' 23:59:59',
             ]);
         }
 
-        $filename = 'laporan-' . now()->format('Ymd-His') . '.csv';
+        $filename = 'laporan-'.now()->format('Ymd-His').'.csv';
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         return response()->stream(function () use ($query) {
             $out = fopen('php://output', 'w');
-            fprintf($out, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF));
 
             fputcsv($out, [
                 'ID Laporan',
@@ -133,7 +131,7 @@ class LaporanController extends Controller
                         $item->id_laporan,
                         optional($item->tanggal_laporan)->format('Y-m-d H:i:s'),
                         Str::upper((string) $item->status),
-                        $item->user?->nama ?? '-',
+                        $item->nama_pelapor ?? '-',
                         $item->alamat ?? '-',
                         preg_replace('/\s+/', ' ', (string) $item->deskripsi),
                         $fotoText,
@@ -148,7 +146,6 @@ class LaporanController extends Controller
     public function show($id)
     {
         $laporan = Laporan::with([
-            'user',
             'tindakLanjut.admin',
             'riwayatStatus.admin',
         ])->findOrFail($id);
@@ -164,17 +161,16 @@ class LaporanController extends Controller
                 'status' => $laporan->status,
                 'tanggal_laporan' => $laporan->tanggal_laporan?->toISOString(),
                 'pelapor' => [
-                    'nama' => $laporan->user?->nama,
-                    'email' => $laporan->user?->email,
-                    'no_telpon' => $laporan->user?->no_telpon,
+                    'nama' => $laporan->nama_pelapor,
+                    'no_telpon' => $laporan->no_telpon_pelapor,
                 ],
-                'tindak_lanjut' => $laporan->tindakLanjut->map(fn($t) => [
+                'tindak_lanjut' => $laporan->tindakLanjut->map(fn ($t) => [
                     'catatan' => $t->catatan,
                     'foto_penanganan' => TindakLanjut::normalizeFotoPaths($t->foto_penanganan),
                     'tanggal' => $t->tanggal?->format('d M Y H:i'),
                     'admin' => $t->admin?->nama,
                 ]),
-                'riwayat_status' => $laporan->riwayatStatus->map(fn($r) => [
+                'riwayat_status' => $laporan->riwayatStatus->map(fn ($r) => [
                     'status_lama' => $r->status_lama,
                     'status_baru' => $r->status_baru,
                     'catatan' => $r->catatan,
@@ -205,7 +201,7 @@ class LaporanController extends Controller
 
         $statusBaru = (string) $request->status;
 
-        if (!$this->isAllowedStatusTransition($statusLama, $statusBaru)) {
+        if (! $this->isAllowedStatusTransition($statusLama, $statusBaru)) {
             return back()->withErrors([
                 'status' => 'Perubahan status harus mengikuti alur: Menunggu → Diverifikasi → Diproses → Selesai. Penolakan dapat dilakukan kapan saja sebelum selesai.',
             ]);
@@ -235,7 +231,7 @@ class LaporanController extends Controller
         $fotoPaths = [];
         if ($statusBaru === 'selesai') {
             $fotoPaths = collect($fotoFiles)
-                ->map(fn($file) => $file->store('tindak_lanjut', 'public'))
+                ->map(fn ($file) => $file->store('tindak_lanjut', 'public'))
                 ->values()
                 ->all();
 
@@ -248,22 +244,22 @@ class LaporanController extends Controller
         }
 
         // 4. Kirim notifikasi WA via queue (background)
-        $noWa = $laporan->user?->no_telpon;
+        $noWa = $laporan->no_telpon_pelapor;
         if ($noWa) {
             $pesanStatus = [
-                'diverifikasi' => "✅ *Laporan Anda telah diverifikasi!*",
-                'diproses' => "🔧 *Laporan Anda sedang diproses!*",
-                'selesai' => "🎉 *Laporan Anda telah selesai ditangani!*",
-                'ditolak' => "❌ *Laporan Anda ditolak.*",
+                'diverifikasi' => '✅ *Laporan Anda telah diverifikasi!*',
+                'diproses' => '🔧 *Laporan Anda sedang diproses!*',
+                'selesai' => '🎉 *Laporan Anda telah selesai ditangani!*',
+                'ditolak' => '❌ *Laporan Anda ditolak.*',
             ];
 
-            $pesan = $pesanStatus[$statusBaru] ?? "📋 Status laporan Anda diperbarui.";
+            $pesan = $pesanStatus[$statusBaru] ?? '📋 Status laporan Anda diperbarui.';
             $catatan = $request->catatan ? "\n\n📝 Catatan: {$request->catatan}" : '';
 
-            $teksNotif = $pesan .
-                "\n\n📋 No. Laporan: *#{$laporan->id_laporan}*" .
-                "\n📍 Lokasi: {$laporan->alamat}" .
-                $catatan .
+            $teksNotif = $pesan.
+                "\n\n📋 No. Laporan: *#{$laporan->id_laporan}*".
+                "\n📍 Lokasi: {$laporan->alamat}".
+                $catatan.
                 "\n\nTerima kasih telah melapor kepada DLH 🌿";
 
             KirimNotifikasiWa::dispatch($noWa, $teksNotif, $fotoPaths);
@@ -303,7 +299,7 @@ class LaporanController extends Controller
         ]);
 
         $fotoPaths = collect(array_filter($request->file('foto_penanganan') ?? []))
-            ->map(fn($file) => $file->store('tindak_lanjut', 'public'))
+            ->map(fn ($file) => $file->store('tindak_lanjut', 'public'))
             ->values()
             ->all();
 

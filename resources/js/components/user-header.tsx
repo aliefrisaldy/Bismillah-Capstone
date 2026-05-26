@@ -1,15 +1,9 @@
-import { Link, usePage } from '@inertiajs/react';
-import { ClipboardList, Menu, PlusCircle } from 'lucide-react';
+import { Link } from '@inertiajs/react';
+import { ClipboardList, Menu, PlusCircle, User } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
     NavigationMenu,
     NavigationMenuItem,
@@ -23,9 +17,7 @@ import {
     SheetTitle,
     SheetTrigger,
 } from '@/components/ui/sheet';
-import { UserMenuContent } from '@/components/user-menu-content';
 import { useCurrentUrl } from '@/hooks/use-current-url';
-import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
@@ -50,9 +42,6 @@ const activeItemStyles =
     'text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100';
 
 export function UserHeader({ breadcrumbs = [] }: Props) {
-    const page = usePage();
-    const { auth } = page.props;
-    const getInitials = useInitials();
     const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
 
     return (
@@ -144,35 +133,11 @@ export function UserHeader({ breadcrumbs = [] }: Props) {
                         </NavigationMenu>
                     </div>
 
-                    {/* Avatar Dropdown — sama persis dengan bawaan */}
+                    {/* User icon statis */}
                     <div className="ml-auto flex items-center space-x-2">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    className="size-10 rounded-full p-1"
-                                >
-                                    <Avatar className="size-8 overflow-hidden rounded-full">
-                                        <AvatarImage
-                                            src={(auth as any).user?.avatar}
-                                            alt={(auth as any).user?.name}
-                                        />
-                                        <AvatarFallback className="rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white">
-                                            {getInitials(
-                                                (auth as any).user?.name ?? '',
-                                            )}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-56" align="end">
-                                {(auth as any).user && (
-                                    <UserMenuContent
-                                        user={(auth as any).user}
-                                    />
-                                )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        <div className="flex size-10 items-center justify-center rounded-full border border-border bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                            <User className="h-5 w-5" />
+                        </div>
                     </div>
                 </div>
             </div>

@@ -141,10 +141,8 @@ export default function Welcome() {
                                 <div className="mt-10 flex flex-wrap items-center gap-4">
                                     <Link
                                         href={
-                                            auth?.user
-                                                ? '/user/laporan/buat'
-                                                : '/register'
-                                        }
+                                            '/user/laporan/buat'
+                                        }   
                                         className="group inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-orange-600 px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-orange-500/25 transition-all hover:-translate-y-1 hover:shadow-orange-500/40"
                                     >
                                         <Camera className="h-5 w-5 transition-transform group-hover:scale-110" />
