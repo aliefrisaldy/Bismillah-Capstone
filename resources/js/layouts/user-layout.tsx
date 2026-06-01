@@ -100,8 +100,9 @@ export default function UserLayout({ children }: { children: ReactNode }) {
                 <nav className="flex items-center justify-between px-6 py-4 md:px-12 lg:px-24">
                     <Link
                         href="/"
-                        className="text-xl font-bold tracking-tight text-foreground"
+                        className="flex items-center gap-2 text-xl font-bold tracking-tight text-foreground"
                     >
+                        <img src="/Logo/logo-pakagasa.svg" alt="Pakagasa" style={{ height: 32, width: 'auto' }} />
                         Pakagasa
                     </Link>
 
@@ -195,7 +196,10 @@ export default function UserLayout({ children }: { children: ReactNode }) {
             <FadeIn delay={100}>
                 <footer className="mx-auto mt-24 flex max-w-6xl flex-col items-center justify-between gap-4 border-t border-border px-6 pt-8 md:flex-row md:px-12">
                     <div>
-                        <h4 className="mb-1 font-bold text-foreground">Pakagasa</h4>
+                        <h4 className="mb-1 flex items-center gap-1.5 font-bold text-foreground">
+                            <img src="/Logo/logo-pakagasa.svg" alt="Pakagasa" style={{ height: 24, width: 'auto' }} />
+                            Pakagasa
+                        </h4>
                         <p className="text-xs text-muted-foreground">
                             © {new Date().getFullYear()} Pemerintah Kota Palu -
                             Dinas Lingkungan Hidup. Digital Arboretum Initiative.

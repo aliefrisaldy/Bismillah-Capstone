@@ -711,7 +711,7 @@ export default function JalurAngkut() {
                 </div>
 
                 {/* Stat Cards */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
                     {(Object.keys(TIPE_CONFIG) as TipeKendaraan[]).map(
                         (tipe) => {
                             const cfg = TIPE_CONFIG[tipe];
@@ -724,7 +724,7 @@ export default function JalurAngkut() {
                                     onClick={() =>
                                         setFilterTipe(active ? '' : tipe)
                                     }
-                                    className={`flex items-center gap-3 rounded-2xl border p-4 text-left transition-all ${
+                                    className={`flex items-center gap-2 sm:gap-3 rounded-2xl border p-3 sm:p-4 text-left transition-all ${
                                         active
                                             ? `border-transparent ring-2 ring-offset-1 ${cfg.pill}`
                                             : 'border-border bg-card hover:bg-muted/50'
