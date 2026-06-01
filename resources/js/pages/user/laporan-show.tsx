@@ -215,10 +215,7 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                         <h1 className="mt-2 text-4xl leading-tight font-extrabold tracking-tight text-foreground md:text-5xl">
                             Detail Laporan #{displayId}
                         </h1>
-                        <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
-                            Status terkini pembersihan lingkungan di wilayah
-                            Palu.
-                        </p>
+
                     </div>
                 </FadeIn>
 
@@ -309,7 +306,7 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                                     <h2 className="text-lg font-extrabold text-foreground">
                                         Deskripsi Temuan
                                     </h2>
-                                    <p className="mt-3 text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
+                                    <p className="mt-3 text-sm leading-relaxed whitespace-pre-line break-words text-muted-foreground">
                                         {laporan.deskripsi}
                                     </p>
 

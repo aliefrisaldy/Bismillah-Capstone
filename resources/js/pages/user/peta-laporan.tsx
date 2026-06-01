@@ -14,6 +14,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import FadeIn from '@/components/fade-in';
+import { Button } from '@/components/ui/button';
 import { Map, MapControls, useMap } from '@/components/ui/map';
 import {
     Select,
@@ -23,7 +24,6 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 
-import { Button } from '@/components/ui/button';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -985,77 +985,6 @@ export default function PetaLaporan() {
                         </span>
                     </div>
                 </div>
-
-                {/* Tabel laporan */}
-                {!loading && filteredLaporan.length > 0 && (
-                    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-                        <div className="border-b border-border px-5 py-4">
-                            <h3 className="text-base font-extrabold text-foreground">
-                                Daftar Laporan
-                                <span className="ml-2 text-sm font-normal text-muted-foreground">
-                                    ({filteredLaporan.length} data)
-                                </span>
-                            </h3>
-                        </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead className="border-b border-border bg-muted/50 text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
-                                    <tr>
-                                        {[
-                                            'ID',
-                                            'Alamat',
-                                            'Tanggal',
-                                            'Status',
-                                        ].map((h) => (
-                                            <th
-                                                key={h}
-                                                className="px-5 py-3 text-center"
-                                            >
-                                                {h}
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border">
-                                    {filteredLaporan.map((item) => {
-                                        const cfg = STATUS_CONFIG[item.status];
-
-                                        return (
-                                            <tr
-                                                key={item.id}
-                                                className="transition-colors hover:bg-muted/40"
-                                            >
-                                                <td className="px-5 py-3 text-center font-mono text-xs text-muted-foreground">
-                                                    #
-                                                    {String(item.id).padStart(
-                                                        5,
-                                                        '0',
-                                                    )}
-                                                </td>
-                                                <td className="max-w-[300px] truncate px-5 py-3 text-center text-muted-foreground">
-                                                    {item.alamat || '—'}
-                                                </td>
-                                                <td className="px-5 py-3 text-center whitespace-nowrap text-muted-foreground">
-                                                    {item.tanggal}
-                                                </td>
-                                                <td className="px-5 py-3 text-center">
-                                                    <span
-                                                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${cfg?.pill}`}
-                                                    >
-                                                        <span
-                                                            className={`h-1.5 w-1.5 rounded-full ${cfg?.dot}`}
-                                                        />
-                                                        {cfg?.label}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                )}
 
                 {!loading && filteredLaporan.length === 0 && (
                     <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card py-16 text-center">

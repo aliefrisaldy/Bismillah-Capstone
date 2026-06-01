@@ -1,11 +1,8 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { formatDistanceToNow } from 'date-fns';
 import { id } from 'date-fns/locale';
 import {
     PlusCircle,
-    HelpCircle,
-    Info,
-    Phone,
     MapPin,
     ClipboardList,
     Timer,
@@ -14,11 +11,18 @@ import {
     FilePlus2,
     ChevronLeft,
     ChevronRight,
+    Camera,
+    FileText,
+    Wifi,
+    Lightbulb,
+    BellRing,
+    RotateCw,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import UserLayout from '@/layouts/user-layout';
+import type { LaporanSummary } from '@/types/global';
 
 // ── FadeIn Component ──────────────────────────────────────
 const FadeIn = ({
@@ -126,6 +130,7 @@ export default function LaporanIndex({ laporan }: Props) {
         (l) => l.status === 'menunggu' || l.status === 'diverifikasi' || l.status === 'diproses',
     ).length;
     const totalSelesai = items.filter((l) => l.status === 'selesai').length;
+    const { laporan_summary } = usePage<{ laporan_summary: LaporanSummary[] }>().props;
 
     return (
         <>
@@ -352,33 +357,31 @@ export default function LaporanIndex({ laporan }: Props) {
                     )}
                 </div>
 
-                {/* Right: Help Card */}
+                {/* Right: Tips Card */}
                 <div className="space-y-6 lg:col-span-1">
                     <FadeIn delay={200} direction="left">
                         <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6 shadow-sm dark:border-blue-800/30 dark:bg-blue-950/40">
                             <div className="mb-5 flex items-center gap-2">
-                                <HelpCircle className="h-5 w-5 text-blue-800 dark:text-blue-300" />
-                                <h3 className="text-lg font-bold text-blue-800 dark:text-blue-300">Butuh Bantuan?</h3>
+                                <Lightbulb className="h-5 w-5 text-blue-800 dark:text-blue-300" />
+                                <h3 className="text-lg font-bold text-blue-800 dark:text-blue-300">Tips Melapor Efektif</h3>
                             </div>
                             <ul className="space-y-4">
                                 {[
-                                    { icon: Info,   text: 'Panduan cara melapor yang efektif' },
-                                    { icon: Phone,  text: 'Hubungi Hotline Dinas Lingkungan Hidup' },
-                                    { icon: MapPin, text: 'Lihat lokasi TPS Resmi terdekat' },
+                                    { icon: Camera,   text: 'Ambil foto lokasi dengan cahaya yang cukup' },
+                                    { icon: MapPin,   text: 'Nyalakan GPS agar lokasi terdeteksi otomatis' },
+                                    { icon: FileText, text: 'Deskripsikan lokasi secara detail dan jelas' },
+                                    { icon: Wifi,     text: 'Pastikan koneksi internet stabil saat mengirim' },
                                 ].map(({ icon: Icon, text }) => (
-                                    <li key={text}>
-                                        <Link
-                                            href="#"
-                                            className="group flex items-start gap-3 text-sm text-blue-700/80 transition-colors hover:text-blue-800 dark:text-blue-400/80 dark:hover:text-blue-300"
-                                        >
-                                            <Icon className="mt-0.5 h-4 w-4 shrink-0" />
-                                            <span className="group-hover:underline">{text}</span>
-                                        </Link>
+                                    <li key={text} className="flex items-start gap-3 text-sm text-blue-700/80 dark:text-blue-400/80">
+                                        <Icon className="mt-0.5 h-4 w-4 shrink-0" />
+                                        <span>{text}</span>
                                     </li>
                                 ))}
                             </ul>
                         </div>
                     </FadeIn>
+
+                
                 </div>
             </div>
         </>
@@ -386,3 +389,64 @@ export default function LaporanIndex({ laporan }: Props) {
 }
 
 LaporanIndex.layout = (page: ReactNode) => <UserLayout>{page}</UserLayout>;
+
+// ── Notification Inline ────────────────────────────────────
+const statusColorMap: Record<string, string> = {
+    diverifikasi: 'border-l-blue-400 bg-blue-50 text-blue-800 dark:bg-blue-950/30 dark:text-blue-300',
+    diproses: 'border-l-orange-400 bg-orange-50 text-orange-800 dark:bg-orange-950/30 dark:text-orange-300',
+    selesai: 'border-l-emerald-400 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300',
+    ditolak: 'border-l-red-400 bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-300',
+};
+
+const NotificationInline = ({ laporan_summary }: { laporan_summary: LaporanSummary[] }) => {
+    const unread = laporan_summary.filter(
+        (l) =>
+            !['menunggu'].includes(l.status) &&
+            (l.status === 'diverifikasi' || l.status === 'diproses' || l.status === 'selesai' || l.status === 'ditolak'),
+    );
+
+    if (unread.length === 0) {
+        return null;
+    }
+
+    return (
+        <FadeIn delay={300} direction="left">
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                <div className="mb-3 flex items-center gap-2">
+                    <BellRing className="h-4 w-4 text-emerald-600" />
+                    <h3 className="text-sm font-bold text-foreground">
+                        Perkembangan Terbaru
+                    </h3>
+                </div>
+                <div className="flex flex-col gap-2">
+                    {unread.slice(0, 3).map((l) => (
+                        <a
+                            key={l.id_laporan}
+                            href={`/user/laporan/${l.id_laporan}`}
+                            className={`flex items-center gap-3 border-l-4 px-4 py-2.5 text-sm transition-colors hover:opacity-80 ${statusColorMap[l.status] || 'border-l-muted bg-muted text-muted-foreground'}`}
+                        >
+                            <span className="flex items-center gap-1.5 font-medium">
+                                <RotateCw className="size-3.5" />
+                                {l.status === 'diverifikasi' && 'Sudah diverifikasi'}
+                                {l.status === 'diproses' && 'Sedang diproses'}
+                                {l.status === 'selesai' && 'Selesai ditangani'}
+                                {l.status === 'ditolak' && 'Ditolak'}
+                            </span>
+                            <span className="ml-auto shrink-0 text-[11px] opacity-70">
+                                {new Date(l.tanggal_diperbarui).toLocaleDateString('id-ID', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                })}
+                            </span>
+                        </a>
+                    ))}
+                </div>
+                {unread.length > 3 && (
+                    <p className="mt-2 text-center text-xs text-muted-foreground">
+                        +{unread.length - 3} laporan lainnya
+                    </p>
+                )}
+            </div>
+        </FadeIn>
+    );
+};

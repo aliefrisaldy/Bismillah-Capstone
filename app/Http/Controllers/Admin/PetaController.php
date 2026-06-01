@@ -18,8 +18,7 @@ class PetaController extends Controller
     {
         $allowed = ['menunggu', 'diverifikasi', 'diproses', 'selesai', 'ditolak'];
 
-        $query = Laporan::with('user')
-            ->whereNotNull('latitude')
+        $query = Laporan::whereNotNull('latitude')
             ->whereNotNull('longitude')
             ->whereIn('status', $allowed);
 
@@ -28,13 +27,13 @@ class PetaController extends Controller
         }
 
         $laporan = $query->get()->map(fn ($item) => [
-            'id'        => $item->id_laporan,
-            'latitude'  => (float) $item->latitude,
+            'id' => $item->id_laporan,
+            'latitude' => (float) $item->latitude,
             'longitude' => (float) $item->longitude,
-            'alamat'    => $item->alamat,
-            'status'    => $item->status,
-            'tanggal'   => $item->tanggal_laporan?->format('d M Y'),
-            'pelapor'   => $item->user?->nama ?? '-',
+            'alamat' => $item->alamat,
+            'status' => $item->status,
+            'tanggal' => $item->tanggal_laporan?->format('d M Y'),
+            'pelapor' => $item->nama_pelapor ?? '-',
         ]);
 
         return response()->json($laporan);

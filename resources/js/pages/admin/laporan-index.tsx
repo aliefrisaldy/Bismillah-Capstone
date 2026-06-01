@@ -666,7 +666,7 @@ return null;
                                                     {item.alamat ||
                                                         'Lokasi tidak tersedia'}
                                                 </p>
-                                                <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                                                <p className="line-clamp-2 text-sm leading-relaxed break-words text-muted-foreground">
                                                     {item.deskripsi}
                                                 </p>
                                             </div>

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Laporan;
 use App\Models\TindakLanjut;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -84,6 +85,8 @@ class LaporanController extends Controller
             'alamat' => $request->alamat,
             'status' => 'menunggu',
         ]);
+
+        Cache::forget('dashboard.stats.v2');
 
         return redirect()->route('user.laporan.index')
             ->withCookie(cookie()->make('pelapor_id', $pelaporId, 60 * 24 * 365))

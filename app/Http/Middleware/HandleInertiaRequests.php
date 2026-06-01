@@ -2,37 +2,19 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Laporan;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
-    /**
-     * The root template that's loaded on the first page visit.
-     *
-     * @see https://inertiajs.com/server-side-setup#root-template
-     *
-     * @var string
-     */
     protected $rootView = 'app';
 
-    /**
-     * Determines the current asset version.
-     *
-     * @see https://inertiajs.com/asset-versioning
-     */
     public function version(Request $request): ?string
     {
         return parent::version($request);
     }
 
-    /**
-     * Define the props that are shared by default.
-     *
-     * @see https://inertiajs.com/shared-data
-     *
-     * @return array<string, mixed>
-     */
     public function share(Request $request): array
     {
         $admin = $request->user('admin');
@@ -43,6 +25,16 @@ class HandleInertiaRequests extends Middleware
             'jabatan' => $admin->jabatan,
         ] : null;
 
+        $pelaporId = $request->cookie('pelapor_id');
+        $laporanSummary = [];
+
+        if ($pelaporId) {
+            $laporanSummary = Laporan::where('id_pelapor', $pelaporId)
+                ->orderByDesc('tanggal_diperbarui')
+                ->get(['id_laporan', 'status', 'tanggal_diperbarui', 'alamat'])
+                ->toArray();
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -51,6 +43,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state')
                 || $request->cookie('sidebar_state') === 'true',
+            'laporan_summary' => $laporanSummary,
         ];
     }
 }

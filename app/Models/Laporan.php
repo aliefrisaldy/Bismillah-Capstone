@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
 #[Fillable([
-    'id_user',
     'id_pelapor',
     'nama_pelapor',
     'no_telpon_pelapor',
@@ -36,11 +35,6 @@ class Laporan extends Model
             'longitude' => 'decimal:8',
             'foto' => 'array',
         ];
-    }
-
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'id_user', 'id_user');
     }
 
     public function tindakLanjut()

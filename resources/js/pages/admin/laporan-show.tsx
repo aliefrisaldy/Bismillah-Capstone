@@ -497,7 +497,7 @@ fd.append('catatan', catatan.trim());
                                     <h2 className="text-lg font-extrabold text-foreground">
                                         Deskripsi Temuan
                                     </h2>
-                                    <p className="mt-3 text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
+                                    <p className="mt-3 text-sm leading-relaxed whitespace-pre-line break-words text-muted-foreground">
                                         {laporan.deskripsi}
                                     </p>
 
@@ -653,14 +653,7 @@ setActiveImage(null);
                             <h3 className="text-lg font-extrabold text-foreground">
                                 Update Status
                             </h3>
-                            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                                Status maju mengikuti urutan: Menunggu →
-                                Diverifikasi → Diproses → Selesai. Anda selalu
-                                dapat menolak laporan pada tahap apa pun sebelum
-                                selesai. Untuk Selesai, unggah foto bukti
-                                pembersihan (disimpan di tindak lanjut).
-                            </p>
-
+                            
                             {errors.status ? (
                                 <p className="mt-3 text-xs text-red-600 dark:text-red-400">
                                     {errors.status}
@@ -855,25 +848,7 @@ return;
                             )}
                         </div>
 
-                        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-                            <h3 className="text-lg font-extrabold text-foreground">
-                                Petugas Lapangan
-                            </h3>
-                            <div className="mt-4 rounded-2xl border border-border bg-background p-4">
-                                <p className="text-sm font-semibold text-foreground">
-                                    {latestTindakLanjut?.admin ??
-                                        'Belum ditugaskan'}
-                                </p>
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                    {latestTindakLanjut?.catatan ??
-                                        'Belum ada catatan tindak lanjut.'}
-                                </p>
-                                <div className="mt-3 inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-[11px] font-semibold text-muted-foreground">
-                                    Estimasi Selesai:{' '}
-                                    {latestTindakLanjut?.tanggal ?? '-'}
-                                </div>
-                            </div>
-                        </div>
+                       
 
                         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                             <h3 className="text-lg font-extrabold text-foreground">

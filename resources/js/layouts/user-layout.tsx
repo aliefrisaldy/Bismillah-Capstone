@@ -2,8 +2,9 @@ import { Link, usePage } from '@inertiajs/react';
 import { Moon, Sun, User } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
+import NotificationDropdown from '@/components/notification-dropdown';
 import { useAppearance } from '@/hooks/use-appearance';
+import type { LaporanSummary } from '@/types/global';
 
 // ── FadeIn ────────────────────────────────────────────────
 export const FadeIn = ({
@@ -85,6 +86,7 @@ export default function UserLayout({ children }: { children: ReactNode }) {
     const { url } = usePage();
     const currentUrl = url;
     const [menuOpen, setMenuOpen] = useState(false);
+    const { laporan_summary } = usePage<{ laporan_summary: LaporanSummary[] }>().props;
 
     const { appearance, updateAppearance } = useAppearance();
 
@@ -127,6 +129,8 @@ export default function UserLayout({ children }: { children: ReactNode }) {
                     </div>
 
                     <div className="flex items-center gap-2">
+                        <NotificationDropdown laporanList={laporan_summary} />
+
                         <button
                             type="button"
                             onClick={toggleTheme}

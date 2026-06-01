@@ -5,7 +5,7 @@
 - **Backend:** Laravel 13 (PHP ^8.3), Inertia v3, Fortify auth, Sanctum tokens, Socialite (Google OAuth)
 - **Frontend:** React 19 + TypeScript + Tailwind CSS v4 + shadcn/ui (New York style)
 - **Build:** Vite 8, `laravel-vite-plugin`, `@inertiajs/vite`, `@laravel/vite-plugin-wayfinder`
-- **DB:** SQLite (default), in-memory for tests
+- **DB:** MySQL (default), in-memory SQLite for tests
 - **Testing:** Pest (PHP), Vitest (none found — frontend tests not present)
 
 ## Commands
@@ -46,6 +46,6 @@
 
 ## Testing quirks
 
-- Tests use SQLite `:memory:` DB (see `phpunit.xml`). No external service dependencies.
+- Tests use SQLite `:memory:` DB (see `phpunit.xml`). Dev uses MySQL.
 - `tests/Pest.php` binds Feature tests to `Tests\TestCase` with `RefreshDatabase` trait **commented out** — tests may not clean DB between runs unless explicitly added.
 - `TestCase` exposes `skipUnlessFortifyHas($feature)` helper for feature-gated tests.

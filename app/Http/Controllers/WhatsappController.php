@@ -2,16 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use App\Models\WaSession;
-use App\Models\User;
 use App\Models\Laporan;
+use App\Models\WaSession;
 use App\Services\FonnteService;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class WhatsappController extends Controller
 {
@@ -50,7 +49,7 @@ class WhatsappController extends Controller
             $pesan = '__foto__';
         }
 
-        if (!empty($request->input('location'))) {
+        if (! empty($request->input('location'))) {
             $pesan = '__lokasi__';
         }
 
@@ -71,9 +70,10 @@ class WhatsappController extends Controller
             $session->update(['step' => 'idle', 'data' => []]);
             $this->fonnte->kirimPesan(
                 $nomor,
-                "❌ Laporan dibatalkan.\n\n" .
-                "Ketik *LAPOR* jika ingin membuat laporan baru."
+                "❌ Laporan dibatalkan.\n\n".
+                'Ketik *LAPOR* jika ingin membuat laporan baru.'
             );
+
             return;
         }
 
@@ -84,15 +84,15 @@ class WhatsappController extends Controller
                     $session->update(['step' => 'nama', 'data' => []]);
                     $this->fonnte->kirimPesan(
                         $nomor,
-                        "Halo! Selamat datang di layanan pengaduan DLH 🌿\n\n" .
-                        "Silakan ketik *nama lengkap* Anda:\n\n" .
-                        "_Ketik *BATAL* untuk membatalkan laporan_"
+                        "Halo! Selamat datang di layanan pengaduan DLH ♻️\n\n".
+                        "Silakan ketik *nama lengkap* Anda:\n\n".
+                        '_Ketik *BATAL* untuk membatalkan laporan_'
                     );
                 } else {
                     $this->fonnte->kirimPesan(
                         $nomor,
-                        "Halo! Saya adalah bot pengaduan DLH 🌿\n\n" .
-                        "Ketik *LAPOR* untuk membuat laporan baru."
+                        "Halo! Saya adalah bot pengaduan DLH ♻️\n\n".
+                        'Ketik *LAPOR* untuk membuat laporan baru.'
                     );
                 }
                 break;
@@ -100,13 +100,13 @@ class WhatsappController extends Controller
             case 'nama':
                 $session->update([
                     'step' => 'deskripsi',
-                    'data' => ['nama' => $pesan]
+                    'data' => ['nama' => $pesan],
                 ]);
                 $this->fonnte->kirimPesan(
                     $nomor,
-                    "Terima kasih *{$pesan}* 👋\n\n" .
-                    "Silakan ceritakan masalah lingkungan yang ingin dilaporkan:\n\n" .
-                    "_Ketik *BATAL* untuk membatalkan laporan_"
+                    "Terima kasih *{$pesan}* 👋\n\n".
+                    "Silakan ceritakan masalah lingkungan yang ingin dilaporkan:\n\n".
+                    '_Ketik *BATAL* untuk membatalkan laporan_'
                 );
                 break;
 
@@ -115,13 +115,13 @@ class WhatsappController extends Controller
                 $data['deskripsi'] = $pesan;
                 $session->update([
                     'step' => 'foto',
-                    'data' => $data
+                    'data' => $data,
                 ]);
                 $this->fonnte->kirimPesan(
                     $nomor,
-                    "Laporan dicatat ✅\n\n" .
-                    "Sekarang kirim *foto* kondisi lingkungan tersebut 📷\n\n" .
-                    "_Ketik *BATAL* untuk membatalkan laporan_"
+                    "Laporan dicatat 📋\n\n".
+                    "Sekarang kirim *foto* kondisi lingkungan tersebut 📸\n\n".
+                    '_Ketik *BATAL* untuk membatalkan laporan_'
                 );
                 break;
 
@@ -132,9 +132,10 @@ class WhatsappController extends Controller
                 if ($pesan !== '__foto__' || empty($fotoUrl)) {
                     $this->fonnte->kirimPesan(
                         $nomor,
-                        "Mohon kirim *foto* ya, bukan teks 🙏\n\n" .
-                        "_Ketik *BATAL* untuk membatalkan laporan_"
+                        "Mohon kirim *foto* ya, bukan teks 🙏\n\n".
+                        '_Ketik *BATAL* untuk membatalkan laporan_'
                     );
+
                     return;
                 }
 
@@ -142,24 +143,24 @@ class WhatsappController extends Controller
                 try {
                     $fotoContents = Http::get($fotoUrl)->body();
                     $extension = pathinfo(parse_url($fotoUrl, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
-                    $filename = 'laporan/' . uniqid('wa_') . '.' . $extension;
+                    $filename = 'laporan/'.uniqid('wa_').'.'.$extension;
 
                     Storage::disk('public')->put($filename, $fotoContents);
                     $data['foto'] = $filename;
                 } catch (\Exception $e) {
-                    Log::error('Gagal download foto WA: ' . $e->getMessage());
+                    Log::error('Gagal download foto WA: '.$e->getMessage());
                     $data['foto'] = $fotoUrl; // fallback ke URL kalau gagal
                 }
 
                 $session->update([
                     'step' => 'lokasi',
-                    'data' => $data
+                    'data' => $data,
                 ]);
                 $this->fonnte->kirimPesan(
                     $nomor,
-                    "Foto diterima 📷\n\n" .
-                    "Terakhir, kirim *lokasi* menggunakan fitur Share Location di WA 📍\n\n" .
-                    "_Ketik *BATAL* untuk membatalkan laporan_"
+                    "Foto diterima 📸\n\n".
+                    "Terakhir, kirim *lokasi* menggunakan fitur Share Location di WA 📍\n\n".
+                    '_Ketik *BATAL* untuk membatalkan laporan_'
                 );
                 break;
 
@@ -170,9 +171,10 @@ class WhatsappController extends Controller
                 if ($pesan !== '__lokasi__' || empty($lokasi)) {
                     $this->fonnte->kirimPesan(
                         $nomor,
-                        "Mohon kirim *lokasi* menggunakan fitur Share Location di WA 📍\n\n" .
-                        "_Ketik *BATAL* untuk membatalkan laporan_"
+                        "Mohon kirim *lokasi* menggunakan fitur Share Location di WA 📍\n\n".
+                        '_Ketik *BATAL* untuk membatalkan laporan_'
                     );
+
                     return;
                 }
 
@@ -191,23 +193,11 @@ class WhatsappController extends Controller
 
     private function simpanLaporan(string $nomor, array $data, string $namaPengirim): void
     {
-        // Cek apakah user sudah ada
-        $user = User::where('no_telpon', $nomor)->first();
-
-        // Kalau belum ada, buat akun otomatis
-        if (!$user) {
-            $user = User::create([
-                'nama' => $data['nama'] ?? $namaPengirim,
-                'email' => $nomor . '@wa.dlh.local',
-                'password' => Hash::make(Str::random(32)),
-                'no_telpon' => $nomor,
-                'sumber_daftar' => 'whatsapp',
-            ]);
-        }
-
-        // Simpan laporan
+        // Simpan laporan tanpa membuat akun User
         $laporan = Laporan::create([
-            'id_user' => $user->id_user,
+            'id_pelapor' => (string) Str::uuid(),
+            'nama_pelapor' => $data['nama'] ?? $namaPengirim,
+            'no_telpon_pelapor' => $nomor,
             'deskripsi' => $data['deskripsi'] ?? '',
             'foto' => [$data['foto']],
             'latitude' => $data['latitude'],
@@ -217,37 +207,40 @@ class WhatsappController extends Controller
             'tanggal_laporan' => now(),
         ]);
 
+        Cache::forget('dashboard.stats.v2');
+
         // Kirim konfirmasi ke warga
         $this->fonnte->kirimPesan(
             $nomor,
-            "✅ *Laporan berhasil dikirim!*\n\n" .
-            "📋 No. Laporan: *#{$laporan->id_laporan}*\n" .
-            "📝 Deskripsi: {$data['deskripsi']}\n" .
-            "📍 Lokasi: {$data['alamat']}\n\n" .
-            "Kami akan segera menindaklanjuti laporan Anda.\n" .
-            "Anda akan mendapat notifikasi saat status laporan berubah 🌿\n\n" .
-            "Ketik *LAPOR* jika ingin membuat laporan baru."
+            "✅ *Laporan berhasil dikirim!*\n\n".
+            "📋 No. Laporan: *#{$laporan->id_laporan}*\n".
+            "📝 Deskripsi: {$data['deskripsi']}\n".
+            "📍 Lokasi: {$data['alamat']}\n\n".
+            "🧹 Tim kami akan segera menangani dan membersihkan lokasi tersebut.\n".
+            "🔔 Anda akan mendapat notifikasi saat status laporan berubah.\n\n".
+            'Ketik *LAPOR* jika ingin membuat laporan baru.'
         );
     }
+
     private function koordinatKeAlamat(float $lat, float $lng): string
     {
         try {
             $response = Http::withHeaders([
-                'User-Agent' => 'DLH-Capstone/1.0'
+                'User-Agent' => 'DLH-Capstone/1.0',
             ])->get('https://nominatim.openstreetmap.org/reverse', [
-                        'lat' => $lat,
-                        'lon' => $lng,
-                        'format' => 'json',
-                        'accept-language' => 'id',
-                    ]);
+                'lat' => $lat,
+                'lon' => $lng,
+                'format' => 'json',
+                'accept-language' => 'id',
+            ]);
 
             $data = $response->json();
 
-            if (!empty($data['display_name'])) {
+            if (! empty($data['display_name'])) {
                 return $data['display_name'];
             }
         } catch (\Exception $e) {
-            Log::error('Geocoding error: ' . $e->getMessage());
+            Log::error('Geocoding error: '.$e->getMessage());
         }
 
         return 'Lokasi via WhatsApp';

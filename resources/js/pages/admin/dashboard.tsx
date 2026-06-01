@@ -1,6 +1,6 @@
 import { Head } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import {
-    AlertCircle,
     CheckCircle2,
     Clock,
     Eye,
@@ -14,6 +14,7 @@ import {
     ShieldCheck,
     Loader2,
 } from 'lucide-react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import {
     Area,
     AreaChart,
@@ -29,8 +30,14 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
-import { useCallback, useEffect, useState } from 'react';
-import { Link } from '@inertiajs/react';
+
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -40,11 +47,6 @@ interface RecentLaporan {
     status: string;
     tanggal: string;
     pelapor: string;
-}
-
-interface TopKelurahan {
-    kelurahan: string;
-    total: number;
 }
 
 interface TrendData {
@@ -58,12 +60,13 @@ interface Props {
     laporanMingguIni: number;
     byStatus: Record<string, number>;
     recentLaporan: RecentLaporan[];
-    topKelurahan: TopKelurahan[];
     totalTps: number;
     totalJalur: number;
     jalurByTipe: Record<string, number>;
     totalUser: number;
     trendBulanan: TrendData;
+    kecamatanList: string[];
+    laporanByKecamatan: Record<string, Record<string, number>>;
 }
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -119,7 +122,7 @@ type Period = 'daily' | 'weekly' | 'monthly';
 
 // ─── Subcomponents ────────────────────────────────────────────────────────────
 
-function StatCard({
+const StatCard = memo(function StatCard({
     label,
     value,
     icon: Icon,
@@ -148,28 +151,90 @@ function StatCard({
             </div>
         </div>
     );
-}
+});
 
-function SectionHeader({ title, icon: Icon }: { title: string; icon: React.FC<{ className?: string }> }) {
+const SectionHeader = memo(function SectionHeader({ title, icon: Icon }: { title: string; icon: React.FC<{ className?: string }> }) {
     return (
         <div className="flex items-center gap-2 border-b border-border pb-2">
             <Icon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             <h2 className="text-base font-extrabold text-foreground">{title}</h2>
         </div>
     );
-}
+});
 
-// ─── Custom Tooltip ───────────────────────────────────────────────────────────
+// ─── Custom Tooltips ──────────────────────────────────────────────────────────
 
-function CustomTooltip({ active, payload, label }: any) {
-    if (!active || !payload?.length) return null;
+const TrendTooltip = memo(function TrendTooltip({ active, payload, label }: any) {
+    if (!active || !payload?.length) {
+        return null;
+    }
+
     return (
         <div className="rounded-xl border border-border bg-card px-3 py-2 shadow-lg">
             <p className="text-[11px] font-bold text-muted-foreground">{label}</p>
             <p className="text-sm font-extrabold text-foreground">{payload[0].value} laporan</p>
         </div>
     );
-}
+});
+
+const StatusTooltip = memo(function StatusTooltip({ active, payload }: any) {
+    if (!active || !payload?.length) {
+        return null;
+    }
+
+    const entry = payload[0];
+    const cfg = Object.values(STATUS_CONFIG).find((s) => s.label === entry.name);
+
+    return (
+        <div className="rounded-xl border border-border bg-card px-3 py-2 shadow-lg">
+            <div className="flex items-center gap-2">
+                <span
+                    className="h-2.5 w-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: cfg?.color ?? '#6b7280' }}
+                />
+                <p className="text-[11px] font-bold text-muted-foreground">{entry.name}</p>
+            </div>
+            <p className="text-sm font-extrabold text-foreground">{entry.value} laporan</p>
+        </div>
+    );
+});
+
+const JalurTooltip = memo(function JalurTooltip({ active, payload }: any) {
+    if (!active || !payload?.length) {
+        return null;
+    }
+
+    const entry = payload[0];
+    const color = TIPE_COLORS[entry.payload.tipe] ?? '#6b7280';
+
+    return (
+        <div className="rounded-xl border border-border bg-card px-3 py-2 shadow-lg">
+            <div className="flex items-center gap-2">
+                <span
+                    className="h-2.5 w-2.5 shrink-0 rounded-sm"
+                    style={{ backgroundColor: color }}
+                />
+                <p className="text-[11px] font-bold text-muted-foreground">{entry.payload.tipe}</p>
+            </div>
+            <p className="text-sm font-extrabold text-foreground">{entry.value} jalur</p>
+        </div>
+    );
+});
+
+const KelurahanTooltip = memo(function KelurahanTooltip({ active, payload, label }: any) {
+    if (!active || !payload?.length) {
+        return null;
+    }
+
+    const entry = payload[0];
+
+    return (
+        <div className="rounded-xl border border-border bg-card px-3 py-2 shadow-lg">
+            <p className="text-[11px] font-bold text-muted-foreground">{label}</p>
+            <p className="text-sm font-extrabold text-foreground">{entry.value} laporan</p>
+        </div>
+    );
+});
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
@@ -179,19 +244,24 @@ export default function Dashboard({
     laporanMingguIni,
     byStatus,
     recentLaporan,
-    topKelurahan,
     totalTps,
     totalJalur,
     jalurByTipe,
     totalUser,
     trendBulanan,
+    kecamatanList,
+    laporanByKecamatan,
 }: Props) {
     const [period, setPeriod] = useState<Period>('monthly');
     const [trendData, setTrendData] = useState<TrendData>(trendBulanan);
     const [loadingTrend, setLoadingTrend] = useState(false);
+    const [selectedKecamatan, setSelectedKecamatan] = useState<string>(
+        kecamatanList.length > 0 ? kecamatanList[0] : '',
+    );
 
     const fetchTrend = useCallback(async (p: Period) => {
         setLoadingTrend(true);
+
         try {
             const res = await fetch(`/admin/dashboard/trend?period=${p}`);
             setTrendData(await res.json());
@@ -202,12 +272,9 @@ export default function Dashboard({
         }
     }, []);
 
-    useEffect(() => {
-        if (period !== 'monthly') fetchTrend(period);
-    }, [period, fetchTrend]);
-
     const handlePeriod = (p: Period) => {
         setPeriod(p);
+
         if (p === 'monthly') {
             setTrendData(trendBulanan);
         } else {
@@ -216,24 +283,50 @@ export default function Dashboard({
     };
 
     // Chart data
-    const trendChartData = trendData.labels.map((label, i) => ({
-        label,
-        value: trendData.values[i],
-    }));
+    const trendChartData = useMemo(
+        () => trendData.labels.map((label, i) => ({ label, value: trendData.values[i] })),
+        [trendData],
+    );
 
-    const statusPieData = Object.entries(STATUS_CONFIG).map(([key, cfg]) => ({
-        name: cfg.label,
-        value: byStatus[key] ?? 0,
-        color: cfg.color,
-    }));
+    const statusPieData = useMemo(
+        () =>
+            Object.entries(STATUS_CONFIG).map(([key, cfg]) => ({
+                name: cfg.label,
+                value: byStatus[key] ?? 0,
+                color: cfg.color,
+            })),
+        [byStatus],
+    );
 
-    const jalurBarData = Object.entries(jalurByTipe).map(([tipe, total]) => ({
-        tipe,
-        total,
-        color: TIPE_COLORS[tipe] ?? '#6b7280',
-    }));
+    const jalurBarData = useMemo(
+        () =>
+            Object.entries(jalurByTipe).map(([tipe, total]) => ({
+                tipe,
+                total,
+                color: TIPE_COLORS[tipe] ?? '#6b7280',
+            })),
+        [jalurByTipe],
+    );
 
-    const maxKelurahan = topKelurahan[0]?.total ?? 1;
+    const kelurahanChartData = useMemo(() => {
+        if (!selectedKecamatan || !laporanByKecamatan[selectedKecamatan]) {
+            return [];
+        }
+
+        return Object.entries(laporanByKecamatan[selectedKecamatan])
+            .map(([kelurahan, total]) => ({ kelurahan, total }))
+            .sort((a, b) => b.total - a.total);
+    }, [selectedKecamatan, laporanByKecamatan]);
+
+    const totalKecamatanLaporan = useMemo(
+        () => kelurahanChartData.reduce((acc, d) => acc + d.total, 0),
+        [kelurahanChartData],
+    );
+
+    const KELURAHAN_BAR_COLORS = [
+        '#10b981', '#34d399', '#6ee7b7', '#a7f3d0', '#d1fae5',
+        '#059669', '#047857', '#065f46', '#064e3b', '#022c22',
+    ];
 
     return (
         <>
@@ -283,25 +376,22 @@ export default function Dashboard({
 
                 {/* ── Status Cards ── */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                    {Object.entries(STATUS_CONFIG).map(([key, cfg]) => {
-                        const Icon = cfg.icon;
-                        return (
-                            <div
-                                key={key}
-                                className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm"
-                            >
-                                <span className={`h-3 w-3 shrink-0 rounded-full ${cfg.dot}`} />
-                                <div className="min-w-0">
-                                    <p className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase truncate">
-                                        {cfg.label}
-                                    </p>
-                                    <p className="text-xl font-extrabold text-foreground">
-                                        {byStatus[key] ?? 0}
-                                    </p>
-                                </div>
+                    {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
+                        <div
+                            key={key}
+                            className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm"
+                        >
+                            <span className={`h-3 w-3 shrink-0 rounded-full ${cfg.dot}`} />
+                            <div className="min-w-0">
+                                <p className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase truncate">
+                                    {cfg.label}
+                                </p>
+                                <p className="text-xl font-extrabold text-foreground">
+                                    {byStatus[key] ?? 0}
+                                </p>
                             </div>
-                        );
-                    })}
+                        </div>
+                    ))}
                 </div>
 
                 {/* ── Section: Tren Laporan ── */}
@@ -356,7 +446,7 @@ export default function Dashboard({
                                         tickLine={false}
                                         axisLine={false}
                                     />
-                                    <Tooltip content={<CustomTooltip />} />
+                                    <Tooltip content={<TrendTooltip />} />
                                     <Area
                                         type="monotone"
                                         dataKey="value"
@@ -390,12 +480,7 @@ export default function Dashboard({
                                             <Cell key={i} fill={entry.color} />
                                         ))}
                                     </Pie>
-                                    <Tooltip
-                                        formatter={(value: any, name: any) => [
-                                            `${value} laporan`,
-                                            name,
-                                        ]}
-                                    />
+                                    <Tooltip content={<StatusTooltip />} />
                                     <Legend
                                         iconType="circle"
                                         iconSize={8}
@@ -416,7 +501,7 @@ export default function Dashboard({
                     {/* Jalur by Tipe */}
                     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
                         <div className="mb-1 flex items-center justify-between">
-                            <h3 className="text-sm font-extrabold text-foreground">Jalur Angkut per Tipe</h3>
+                            <h3 className="text-sm font-extrabold text-foreground">Armada Pengangkutan Sampah</h3>
                             <span className="text-[11px] text-muted-foreground">{totalJalur} total jalur</span>
                         </div>
                         <div className="h-48">
@@ -444,8 +529,8 @@ export default function Dashboard({
                                         axisLine={false}
                                     />
                                     <Tooltip
-                                        formatter={(v: any) => [`${v} jalur`, 'Jumlah']}
                                         cursor={{ fill: 'currentColor', fillOpacity: 0.05 }}
+                                        content={<JalurTooltip />}
                                     />
                                     <Bar dataKey="total" radius={[6, 6, 0, 0]} maxBarSize={56}>
                                         {jalurBarData.map((entry, i) => (
@@ -457,43 +542,104 @@ export default function Dashboard({
                         </div>
                     </div>
 
-                    {/* Top Kelurahan */}
+                    {/* Laporan per Kelurahan */}
                     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-                        <h3 className="mb-4 text-sm font-extrabold text-foreground">
-                            Kelurahan dengan Laporan Terbanyak
-                        </h3>
-                        {topKelurahan.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground/50">
-                                <MapPin className="mb-2 h-8 w-8" />
-                                <p className="text-sm">Belum ada data</p>
+                        <div className="mb-4 flex items-center justify-between">
+                            <h3 className="text-sm font-extrabold text-foreground">
+                                Laporan Setiap Kelurahan
+                            </h3>
+                            {kecamatanList.length > 0 && (
+                                <Select
+                                    value={selectedKecamatan}
+                                    onValueChange={setSelectedKecamatan}
+                                >
+                                    <SelectTrigger className="h-9 w-[180px] border-input bg-background font-normal shadow-sm focus-visible:border-emerald-500/50 focus-visible:ring-emerald-500/20 dark:bg-input/30 dark:hover:bg-input/45">
+                                        <SelectValue placeholder="Pilih Kecamatan" />
+                                    </SelectTrigger>
+                                    <SelectContent
+                                        align="start"
+                                        className="rounded-xl border-border/80 p-1.5 shadow-lg dark:border-sidebar-border"
+                                    >
+                                        {kecamatanList.map((k) => (
+                                            <SelectItem
+                                                key={k}
+                                                value={k}
+                                                className="cursor-pointer rounded-lg py-2.5 pr-10 pl-2.5 focus:bg-emerald-500/10 focus:text-foreground"
+                                            >
+                                                <span className="text-sm">{k}</span>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            )}
+                        </div>
+                        {selectedKecamatan && kelurahanChartData.length > 0 ? (
+                            <div className="h-56">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart
+                                        data={kelurahanChartData}
+                                        margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
+                                        layout="vertical"
+                                    >
+                                        <CartesianGrid
+                                            strokeDasharray="3 3"
+                                            stroke="currentColor"
+                                            strokeOpacity={0.06}
+                                            horizontal={false}
+                                        />
+                                        <XAxis
+                                            type="number"
+                                            allowDecimals={false}
+                                            tick={{ fontSize: 10 }}
+                                            tickLine={false}
+                                            axisLine={false}
+                                        />
+                                        <YAxis
+                                            type="category"
+                                            dataKey="kelurahan"
+                                            tick={{ fontSize: 10 }}
+                                            tickLine={false}
+                                            axisLine={false}
+                                            width={90}
+                                        />
+                                        <Tooltip
+                                            cursor={{ fill: 'currentColor', fillOpacity: 0.05 }}
+                                            content={<KelurahanTooltip />}
+                                        />
+                                        <Bar
+                                            dataKey="total"
+                                            radius={[0, 6, 6, 0]}
+                                            maxBarSize={20}
+                                        >
+                                            {kelurahanChartData.map((entry, i) => (
+                                                <Cell
+                                                    key={entry.kelurahan}
+                                                    fill={
+                                                        KELURAHAN_BAR_COLORS[
+                                                            i % KELURAHAN_BAR_COLORS.length
+                                                        ]
+                                                    }
+                                                />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
                             </div>
                         ) : (
-                            <div className="space-y-3">
-                                {topKelurahan.map((k, i) => (
-                                    <div key={k.kelurahan} className="flex items-center gap-3">
-                                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-extrabold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-                                            {i + 1}
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <div className="mb-1 flex items-center justify-between">
-                                                <span className="text-xs font-semibold text-foreground truncate">
-                                                    {k.kelurahan}
-                                                </span>
-                                                <span className="ml-2 shrink-0 text-xs font-bold text-muted-foreground">
-                                                    {k.total}
-                                                </span>
-                                            </div>
-                                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                                                <div
-                                                    className="h-full rounded-full bg-emerald-500"
-                                                    style={{ width: `${(k.total / maxKelurahan) * 100}%` }}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
+                            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground/50">
+                                <MapPin className="mb-2 h-8 w-8" />
+                                <p className="text-sm">
+                                    {selectedKecamatan
+                                        ? 'Belum ada laporan'
+                                        : 'Pilih kecamatan terlebih dahulu'}
+                                </p>
                             </div>
                         )}
+                        <div className="mt-2 text-right text-[11px] text-muted-foreground">
+                            {selectedKecamatan
+                                ? `${totalKecamatanLaporan} laporan di ${selectedKecamatan}`
+                                : ''}
+                        </div>
                     </div>
                 </div>
 
@@ -524,7 +670,7 @@ export default function Dashboard({
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
-                                {recentLaporan.length === 0 ? (
+                                {!Array.isArray(recentLaporan) || recentLaporan.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
                                             Belum ada laporan
@@ -533,6 +679,7 @@ export default function Dashboard({
                                 ) : (
                                     recentLaporan.map((item) => {
                                         const cfg = STATUS_CONFIG[item.status] ?? STATUS_CONFIG.menunggu;
+
                                         return (
                                             <tr key={item.id} className="transition-colors hover:bg-muted/40">
                                                 <td className="px-5 py-3 text-center font-mono text-xs text-muted-foreground">

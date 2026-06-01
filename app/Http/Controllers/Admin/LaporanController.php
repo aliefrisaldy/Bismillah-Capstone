@@ -9,6 +9,7 @@ use App\Models\RiwayatStatus;
 use App\Models\TindakLanjut;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -218,6 +219,8 @@ class LaporanController extends Controller
         // 1. Update status
         $laporan->update(['status' => $statusBaru]);
 
+        Cache::forget('dashboard.stats.v2');
+
         // 2. Catat riwayat
         RiwayatStatus::create([
             'id_laporan' => $laporan->id_laporan,
@@ -248,7 +251,7 @@ class LaporanController extends Controller
         if ($noWa) {
             $pesanStatus = [
                 'diverifikasi' => '✅ *Laporan Anda telah diverifikasi!*',
-                'diproses' => '🔧 *Laporan Anda sedang diproses!*',
+                'diproses' => '🧹 *Laporan Anda sedang diproses!*',
                 'selesai' => '🎉 *Laporan Anda telah selesai ditangani!*',
                 'ditolak' => '❌ *Laporan Anda ditolak.*',
             ];
@@ -260,7 +263,7 @@ class LaporanController extends Controller
                 "\n\n📋 No. Laporan: *#{$laporan->id_laporan}*".
                 "\n📍 Lokasi: {$laporan->alamat}".
                 $catatan.
-                "\n\nTerima kasih telah melapor kepada DLH 🌿";
+                "\n\nTerima kasih telah melapor kepada DLH ♻️";
 
             KirimNotifikasiWa::dispatch($noWa, $teksNotif, $fotoPaths);
         }
