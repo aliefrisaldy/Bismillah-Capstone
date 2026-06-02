@@ -4,7 +4,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\JalurAngkutController;
 use App\Http\Controllers\Admin\LaporanController as AdminLaporanController;
 use App\Http\Controllers\Admin\PetaController;
-use App\Http\Controllers\Admin\TPSResmiController;
+use App\Http\Controllers\Admin\TpsResmiController;
 use App\Http\Controllers\Auth\AdminAuthController;
 use App\Http\Controllers\User\LaporanController as UserLaporanController;
 use App\Http\Controllers\User\WargaPetaController;
@@ -64,9 +64,9 @@ Route::prefix('admin')->name('admin.')->middleware('auth.admin')->group(function
     Route::patch('/jalur-angkut/{id}/toggle', [JalurAngkutController::class, 'toggleAktif']);
     Route::get('/jalur-angkut/kelurahans', [JalurAngkutController::class, 'kelurahans']);
 
-    Route::get('/tps-resmi/data', [TPSResmiController::class, 'data'])->name('tps-resmi.data');
-    Route::post('/tps-resmi', [TPSResmiController::class, 'store'])->name('tps-resmi.store');
-    Route::delete('/tps-resmi/{id}', [TPSResmiController::class, 'destroy'])->name('tps-resmi.destroy');
-    Route::get('/tps-resmi', [TPSResmiController::class, 'index'])->name('tps-resmi.index');
-    Route::patch('/tps-resmi/{id}/toggle', [TPSResmiController::class, 'toggleAktif'])->name('tps-resmi.toggle');
+    Route::get('/tps-resmi/data', [TpsResmiController::class, 'data'])->name('tps-resmi.data');
+    Route::post('/tps-resmi', [TpsResmiController::class, 'store'])->name('tps-resmi.store');
+    Route::delete('/tps-resmi/{id}', [TpsResmiController::class, 'destroy'])->name('tps-resmi.destroy');
+    Route::get('/tps-resmi', [TpsResmiController::class, 'index'])->name('tps-resmi.index');
+    Route::patch('/tps-resmi/{id}/toggle', [TpsResmiController::class, 'toggleAktif'])->name('tps-resmi.toggle');
 });
