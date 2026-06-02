@@ -2,7 +2,6 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import {
     MapPin,
     Camera,
-    CheckCircle,
     ArrowRight,
     Star,
     Leaf,
@@ -10,11 +9,11 @@ import {
     Trash2,
     Globe,
     ShieldCheck,
-    Activity,
     Smartphone,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { useAppearance } from '@/hooks/use-appearance';
 
 type Auth = {
     user: { name: string } | null;
@@ -89,6 +88,7 @@ observer.unobserve(currentRef);
 
 export default function Welcome() {
     const { auth } = usePage<{ auth: Auth }>().props;
+    const { resolvedAppearance } = useAppearance();
 
     return (
         <div className="min-h-screen bg-background font-sans selection:bg-green-500/30">
@@ -97,8 +97,6 @@ export default function Welcome() {
             {/* ── HERO ──────────────────────────────────────── */}
             <section className="relative overflow-hidden pt-16 pb-20 md:pt-24 lg:pt-32 lg:pb-28">
                 {/* Background Decoration */}
-                <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-green-100 via-background to-background opacity-80 dark:from-green-900/20" />
-                <div className="absolute top-20 right-0 -mr-20 h-72 w-72 rounded-full bg-green-400/20 blur-3xl" />
                 <div className="absolute bottom-0 left-0 -ml-20 h-72 w-72 rounded-full bg-orange-400/10 blur-3xl" />
 
                 <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8">
@@ -118,13 +116,13 @@ export default function Welcome() {
                             </FadeIn>
 
                             <FadeIn delay={200}>
-                                <h1 className="text-5xl font-extrabold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
+                                <h1 className="text-5xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
                                     Wujudkan{' '}
                                     <span className="bg-gradient-to-r from-green-600 to-emerald-400 bg-clip-text text-transparent">
                                         Palu
                                     </span>
                                     <br />
-                                    Yang Lebih Asri
+                                    Yang Lebih Bersih
                                 </h1>
                             </FadeIn>
 
@@ -164,70 +162,11 @@ export default function Welcome() {
                             direction="left"
                             className="relative lg:ml-auto"
                         >
-                            <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
-                                {/* Decorative elements behind card */}
-                                <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-green-500 to-emerald-500 opacity-20 blur-2xl dark:opacity-40"></div>
-
-                                <div className="relative overflow-hidden rounded-3xl border border-border/50 bg-card/80 shadow-2xl backdrop-blur-xl">
-                                    {/* Mockup Header */}
-                                    <div className="flex items-center gap-2 border-b border-border/50 bg-muted/50 px-4 py-3">
-                                        <div className="flex gap-1.5">
-                                            <div className="h-3 w-3 rounded-full bg-red-400"></div>
-                                            <div className="h-3 w-3 rounded-full bg-amber-400"></div>
-                                            <div className="h-3 w-3 rounded-full bg-green-400"></div>
-                                        </div>
-                                    </div>
-
-                                    {/* Mockup Content */}
-                                    <div className="p-6">
-                                        <div className="group relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900/40 dark:to-green-900/10">
-                                            <div className="absolute inset-0 bg-black/5 transition-colors duration-500 group-hover:bg-black/0"></div>
-                                            <div className="transform text-center transition-transform duration-500 group-hover:scale-110">
-                                                <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-xl dark:bg-neutral-800">
-                                                    <Recycle className="h-10 w-10 text-green-600 drop-shadow-md" />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="mt-6 flex items-center justify-between">
-                                            <div>
-                                                <h3 className="text-lg font-bold text-foreground">
-                                                    Pembersihan Kawasan Pantai
-                                                </h3>
-                                                <div className="mt-2 flex items-center gap-2">
-                                                    <span className="flex items-center gap-1.5 rounded-md bg-green-100 px-2 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/50 dark:text-green-400">
-                                                        <Activity className="h-3.5 w-3.5" />{' '}
-                                                        Aktif
-                                                    </span>
-                                                    <span className="text-sm text-muted-foreground">
-                                                        Oleh DLH Palu
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
-                                                <MapPin className="h-6 w-6" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Floating Elements */}
-                                <div className="animate-bounce-slow absolute top-12 -left-8 rounded-2xl border border-border bg-card p-4 shadow-xl">
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400">
-                                            <CheckCircle className="h-5 w-5" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-bold">
-                                                Terverifikasi
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                Baru saja
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <img
+                                src={`/Logo/landing_page_${resolvedAppearance}.png`}
+                                alt="Pakagasa Landing Page"
+                                className="w-full"
+                            />
                         </FadeIn>
                     </div>
                 </div>
