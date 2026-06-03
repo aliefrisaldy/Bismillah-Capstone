@@ -986,19 +986,6 @@ export default function PetaLaporan() {
                     </div>
                 </div>
 
-                {!loading && filteredLaporan.length === 0 && (
-                    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card py-16 text-center">
-                        <MapPin className="mb-3 h-8 w-8 text-muted-foreground/40" />
-                        <p className="text-sm font-semibold text-muted-foreground">
-                            Tidak ada laporan ditemukan
-                        </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                            {filterStatus || filterKecamatan || filterKelurahan
-                                ? 'Coba reset filter status atau kelurahan.'
-                                : 'Belum ada laporan dengan koordinat GPS.'}
-                        </p>
-                    </div>
-                )}
             </div>
         </>
     );
