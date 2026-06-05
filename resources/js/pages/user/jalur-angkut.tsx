@@ -1,11 +1,11 @@
 import { Head } from '@inertiajs/react';
-import { Layers, Route, CalendarClock, RotateCcw } from 'lucide-react';
+import { Layers, Route, RotateCcw } from 'lucide-react';
 import maplibregl from 'maplibre-gl';
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createRoot } from 'react-dom/client';
 import FadeIn from '@/components/fade-in';
 import { Button } from '@/components/ui/button';
+import { JalurMapPopup } from '@/components/map/jalur-popup-card';
 import { Map, MapControls, useMap } from '@/components/ui/map';
 import {
     Select,
@@ -15,7 +15,6 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import UserLayout from '@/layouts/user-layout';
-import { getHariLabel, normalizeJadwal } from '@/lib/jalur-schedule';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -289,109 +288,7 @@ map.removeSource(JALUR_SOURCE);
     return null;
 }
 
-/** Popup MapLibre imperatif */
-function JalurMapPopup({
-    feature,
-    lngLat,
-    onClose,
-}: {
-    feature: JalurFeature;
-    lngLat: [number, number];
-    onClose: () => void;
-}) {
-    const { map, isLoaded } = useMap();
 
-    useEffect(() => {
-        if (!map || !isLoaded) {
-            return;
-        }
-
-        const el = document.createElement('div');
-        const root = createRoot(el);
-        root.render(<JalurPopupCard feature={feature} />);
-
-        const popup = new maplibregl.Popup({
-            closeButton: true,
-            className: 'mapcn-popup',
-            maxWidth: '300px',
-        })
-            .setLngLat(lngLat)
-            .setDOMContent(el)
-            .addTo(map);
-
-        const handleClose = () => onClose();
-        popup.on('close', handleClose);
-
-        return () => {
-            popup.off('close', handleClose);
-            popup.remove();
-            queueMicrotask(() => root.unmount());
-        };
-    }, [map, isLoaded, feature, lngLat, onClose]);
-
-    return null;
-}
-
-function JalurPopupCard({ feature }: { feature: JalurFeature }) {
-    const { tipe_kendaraan, warna, nama, kelurahan, jadwal } =
-        feature.properties;
-    const cfg = TIPE_CONFIG[tipe_kendaraan as TipeKendaraan];
-    const label = nama ?? tipe_kendaraan;
-    const jadwalList = normalizeJadwal(jadwal);
-
-    return (
-        <div className="max-w-[260px] min-w-[200px] space-y-2.5">
-            <div className="flex items-center gap-2">
-                <span
-                    className="h-2.5 w-2.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: warna }}
-                />
-                <strong className="text-sm" style={{ color: warna }}>
-                    {label}
-                </strong>
-            </div>
-            {kelurahan && (
-                <p className="pl-4 text-[11px] text-muted-foreground">
-                    {kelurahan}
-                </p>
-            )}
-            <span
-                className="ml-4 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold"
-                style={{ backgroundColor: `${warna}22`, color: warna }}
-            >
-                {cfg?.label ?? tipe_kendaraan}
-            </span>
-
-            <div className="ml-4 space-y-1.5 border-t border-border pt-2">
-                <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
-                    <CalendarClock className="h-3.5 w-3.5" />
-                    Jadwal Operasi
-                </div>
-                {jadwalList.length === 0 ? (
-                    <p className="text-[11px] text-muted-foreground italic">
-                        Belum dijadwalkan
-                    </p>
-                ) : (
-                    <ul className="space-y-1">
-                        {jadwalList.map((j) => (
-                            <li
-                                key={j.hari}
-                                className="flex items-center justify-between gap-2 rounded-md bg-muted/40 px-2 py-1 text-[11px]"
-                            >
-                                <span className="font-semibold text-foreground">
-                                    {getHariLabel(j.hari)}
-                                </span>
-                                <span className="font-mono text-muted-foreground">
-                                    {j.jam_mulai}–{j.jam_selesai}
-                                </span>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </div>
-        </div>
-    );
-}
 
 // ─── TPS Resmi ─────────────────────────────────────────────────────────────────
 

@@ -16,7 +16,6 @@ import {
     Pencil,
     CheckCircle2,
     XCircle,
-    CalendarClock,
     RotateCcw,
     Trash2,
 } from 'lucide-react';
@@ -44,7 +43,8 @@ import {
 } from '@/components/ui/select';
 
 
-import { getHariLabel, normalizeJadwal } from '@/lib/jalur-schedule';
+import { JalurMapPopup } from '@/components/map/jalur-popup-card';
+import type { JalurFeature } from '@/components/map/jalur-popup-card';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -70,24 +70,6 @@ interface TpsResmi {
     id: number;
     latitude: number;
     longitude: number;
-}
-
-interface JalurProperties {
-    id: number;
-    nama: string | null;
-    kelurahan: string | null;
-    tipe_kendaraan: TipeKendaraan;
-    warna: string;
-    jadwal?: unknown;
-}
-
-interface JalurFeature {
-    type: 'Feature';
-    properties: JalurProperties;
-    geometry: {
-        type: 'LineString';
-        coordinates: [number, number][];
-    };
 }
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -439,91 +421,6 @@ function LaporanPopupCard({
 
 // ─── Jalur popup card (React) — dipasang via maplibregl.Popup imperatif ───────
 
-function JalurPopupCard({
-    feature,
-    onEdit,
-}: {
-    feature: JalurFeature;
-    onEdit: () => void;
-}) {
-    const { id, tipe_kendaraan, warna, nama, kelurahan, jadwal } =
-        feature.properties;
-    const cfg = TIPE_CONFIG[tipe_kendaraan as TipeKendaraan];
-    const label = nama ?? tipe_kendaraan;
-    const jadwalList = normalizeJadwal(jadwal);
-
-    return (
-        <div className="max-w-[260px] min-w-[200px] space-y-2.5">
-            <div className="flex items-center gap-2">
-                <span
-                    className="h-2.5 w-2.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: warna }}
-                />
-                <strong className="text-sm" style={{ color: warna }}>
-                    {label}
-                </strong>
-            </div>
-            {kelurahan && (
-                <p className="pl-4 text-[11px] text-muted-foreground">
-                    {kelurahan}
-                </p>
-            )}
-            <span
-                className="ml-4 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold"
-                style={{ backgroundColor: `${warna}22`, color: warna }}
-            >
-                {cfg?.label ?? tipe_kendaraan}
-            </span>
-
-            <div className="ml-4 space-y-1.5 border-t border-border pt-2">
-                <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
-                    <CalendarClock className="h-3 w-3" />
-                    Jadwal Operasi
-                </div>
-                {jadwalList.length === 0 ? (
-                    <p className="text-[11px] text-muted-foreground italic">
-                        Belum dijadwalkan
-                    </p>
-                ) : (
-                    <ul className="space-y-1">
-                        {jadwalList.map((j) => (
-                            <li
-                                key={j.hari}
-                                className="flex items-center justify-between gap-2 rounded-md bg-muted/40 px-2 py-1 text-[11px]"
-                            >
-                                <span className="font-semibold text-foreground">
-                                    {getHariLabel(j.hari)}
-                                </span>
-                                <span className="font-mono text-muted-foreground">
-                                    {j.jam_mulai}–{j.jam_selesai}
-                                </span>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </div>
-
-            <div className="ml-4 flex flex-col gap-1.5 pt-0.5">
-                <Link
-                    href={`/admin/jalur/${id}`}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/50 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
-                >
-                    Lihat Detail
-                    <ExternalLink className="h-3 w-3" />
-                </Link>
-                <button
-                    type="button"
-                    onClick={onEdit}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-600"
-                >
-                    <Pencil className="h-3 w-3" />
-                    Edit di Peta
-                </button>
-            </div>
-        </div>
-    );
-}
-
 // ─── Layer polygon kelurahan terpilih (filter laporan) ───────────────────────
 
 function KelurahanPolygonLayer({
@@ -851,49 +748,6 @@ function JalurGeoJsonLayer({
 }
 
 // ─── Jalur popup (imperatif maplibre) ────────────────────────────────────────
-
-function JalurMapPopup({
-    feature,
-    lngLat,
-    onClose,
-    onEdit,
-}: {
-    feature: JalurFeature;
-    lngLat: [number, number];
-    onClose: () => void;
-    onEdit: () => void;
-}) {
-    const { map, isLoaded } = useMap();
-
-    useEffect(() => {
-        if (!map || !isLoaded) {
-            return;
-        }
-
-        const el = document.createElement('div');
-        const root = createRoot(el);
-        root.render(<JalurPopupCard feature={feature} onEdit={onEdit} />);
-
-        const popup = new maplibregl.Popup({
-            closeButton: true,
-            className: 'mapcn-popup',
-            maxWidth: '320px',
-        })
-            .setLngLat(lngLat)
-            .setDOMContent(el)
-            .addTo(map);
-
-        popup.on('close', onClose);
-
-        return () => {
-            popup.off('close', onClose);
-            popup.remove();
-            queueMicrotask(() => root.unmount());
-        };
-    }, [map, isLoaded, feature, lngLat, onClose, onEdit]);
-
-    return null;
-}
 
 // ─── Fit bounds ke jalur yang aktif ──────────────────────────────────────────
 
@@ -2212,6 +2066,7 @@ export default function Peta() {
                                             setPopupLngLat(null);
                                         }}
                                         onEdit={() => startEdit(popupJalur)}
+                                        showDetail
                                     />
                                 )}
 

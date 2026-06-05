@@ -411,9 +411,7 @@ export default function Welcome() {
                             <div className="flex flex-col gap-4 sm:flex-row">
                                 <Link
                                     href={
-                                        auth?.user
-                                            ? '/user/laporan/buat'
-                                            : '/register'
+                                        '/user/laporan/buat'    
                                     }
                                     className="group inline-flex items-center justify-center gap-2 rounded-full bg-white px-8 py-4 text-sm font-bold text-neutral-900 transition-all hover:bg-neutral-200"
                                 >

@@ -24,7 +24,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { formatJadwalLabel, normalizeJadwal } from '@/lib/jalur-schedule';
+import { normalizeJadwal } from '@/lib/jalur-schedule';
 
 const FadeIn = ({
     children,
@@ -762,13 +762,21 @@ throw new Error();
                                                         {item.titik_count}
                                                     </td>
                                                     <td className="py-3 text-center">
-                                                        <p className="truncate text-xs text-muted-foreground">
-                                                            {formatJadwalLabel(
+                                                        <span
+                                                            className={`inline-block rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wider ${
                                                                 normalizeJadwal(
                                                                     item.jadwal,
-                                                                ),
-                                                            )}
-                                                        </p>
+                                                                ).length > 0
+                                                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                                                    : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400'
+                                                            }`}
+                                                        >
+                                                            {normalizeJadwal(
+                                                                item.jadwal,
+                                                            ).length > 0
+                                                                ? 'TERJADWALKAN'
+                                                                : 'BELUM TERJADWALKAN'}
+                                                        </span>
                                                     </td>
                                                     <td className="py-3 text-center text-xs text-muted-foreground">
                                                         {item.updated_at ?? '—'}

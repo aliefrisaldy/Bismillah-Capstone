@@ -258,9 +258,6 @@ export default function AdminJalurShow({ jalur }: Props) {
                                 </ul>
                             )}
 
-                            <p className="mt-4 text-xs text-muted-foreground">
-                                {formatJadwalLabel(jadwal)}
-                            </p>
                         </div>
                     </div>
 

@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import maplibregl from 'maplibre-gl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createRoot } from 'react-dom/client';
+import { JalurMapPopup } from '@/components/map/jalur-popup-card';
 import {
     Map,
     MapControls,
@@ -287,94 +287,7 @@ return;
 }
 
 /** Popup MapLibre imperatif — MapPopup React tidak render pada mount pertama */
-function JalurMapPopup({
-    feature,
-    lngLat,
-    onClose,
-    onEdit,
-}: {
-    feature: JalurFeature;
-    lngLat: [number, number];
-    onClose: () => void;
-    onEdit: () => void;
-}) {
-    const { map, isLoaded } = useMap();
 
-    useEffect(() => {
-        if (!map || !isLoaded) {
-return;
-}
-
-        const el = document.createElement('div');
-        const root = createRoot(el);
-        root.render(<JalurPopupCard feature={feature} onEdit={onEdit} />);
-
-        const popup = new maplibregl.Popup({
-            closeButton: true,
-            className: 'mapcn-popup',
-            maxWidth: '300px',
-        })
-            .setLngLat(lngLat)
-            .setDOMContent(el)
-            .addTo(map);
-
-        const handleClose = () => onClose();
-        popup.on('close', handleClose);
-
-        return () => {
-            popup.off('close', handleClose);
-            popup.remove();
-            queueMicrotask(() => root.unmount());
-        };
-    }, [map, isLoaded, feature, lngLat, onClose, onEdit]);
-
-    return null;
-}
-
-function JalurPopupCard({
-    feature,
-    onEdit,
-}: {
-    feature: JalurFeature;
-    onEdit: () => void;
-}) {
-    const { tipe_kendaraan, warna, nama, kelurahan } = feature.properties;
-    const cfg = TIPE_CONFIG[tipe_kendaraan as TipeKendaraan];
-    const label = nama ?? tipe_kendaraan;
-
-    return (
-        <div className="min-w-[180px] space-y-2">
-            <div className="flex items-center gap-2">
-                <span
-                    className="h-2.5 w-2.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: warna }}
-                />
-                <strong className="text-sm" style={{ color: warna }}>
-                    {label}
-                </strong>
-            </div>
-            {kelurahan && (
-                <p className="pl-4 text-[11px] text-muted-foreground">
-                    {kelurahan}
-                </p>
-            )}
-            <span
-                className="ml-4 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold"
-                style={{ backgroundColor: `${warna}22`, color: warna }}
-            >
-                {cfg?.label ?? tipe_kendaraan}
-            </span>
-            <button
-                type="button"
-                onClick={onEdit}
-                className="ml-4 inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-600"
-            >
-                <Pencil className="h-3 w-3" />
-                Edit Jalur
-            </button>
-        </div>
-    );
-}
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
@@ -823,6 +736,7 @@ throw new Error();
                                         lngLat={popupLngLat}
                                         onClose={closePopup}
                                         onEdit={() => startEdit(popupJalur)}
+                                        showDetail
                                     />
                                 )}
                         </Map>
