@@ -1,9 +1,4 @@
 import { Head, router } from '@inertiajs/react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import {
     Image as ImageIcon,
     FileText,
@@ -16,33 +11,12 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState, useRef, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import FadeIn from '@/components/fade-in';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconUrl: markerIcon,
-    iconRetinaUrl: markerIcon2x,
-    shadowUrl: markerShadow,
-});
-
-// ── Types ─────────────────────────────────────────────────
-function ChangeView({
-    center,
-    zoom,
-}: {
-    center: [number, number];
-    zoom: number;
-}) {
-    const map = useMap();
-    map.setView(center, zoom);
-
-    return null;
-}
+import { Map, MapMarker } from '@/components/ui/map';
 
 export default function LaporanCreate() {
     const [processing, setProcessing] = useState(false);
@@ -383,34 +357,23 @@ return;
                                 ) : (
                                     <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-2">
                                         <div className="relative z-0 h-[200px] w-full overflow-hidden rounded-xl border border-border">
-                                            <MapContainer
+                                            <Map
                                                 center={[
-                                                    Number(latitude),
                                                     Number(longitude),
+                                                    Number(latitude),
                                                 ]}
                                                 zoom={16}
-                                                scrollWheelZoom={false}
-                                                className="relative z-0 h-full w-full"
-                                                style={{ zIndex: 0 }}
+                                                className="z-0"
                                             >
-                                                <TileLayer
-                                                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                                                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                                />
-                                                <Marker
-                                                    position={[
-                                                        Number(latitude),
-                                                        Number(longitude),
-                                                    ]}
-                                                />
-                                                <ChangeView
-                                                    center={[
-                                                        Number(latitude),
-                                                        Number(longitude),
-                                                    ]}
-                                                    zoom={16}
-                                                />
-                                            </MapContainer>
+                                                <MapMarker
+                                                    longitude={Number(longitude)}
+                                                    latitude={Number(latitude)}
+                                                >
+                                                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500 shadow-lg">
+                                                        <MapPin className="h-5 w-5 text-white" />
+                                                    </div>
+                                                </MapMarker>
+                                            </Map>
                                         </div>
 
                                         <div className="space-y-4">

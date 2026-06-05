@@ -12,6 +12,8 @@ import {
     Power,
     Eye,
     Pencil,
+    Trash2,
+    Download,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState  } from 'react';
 import type {ReactNode} from 'react';
@@ -236,6 +238,7 @@ export default function AdminJalurIndex({
     const [kelurahan, setKelurahan] = useState(filters?.kelurahan ?? '');
     const [aktif, setAktif] = useState(filters?.aktif ?? '');
     const [togglingId, setTogglingId] = useState<number | null>(null);
+    const [deletingId, setDeletingId] = useState<number | null>(null);
     const lastSerializedRef = useRef<string>('');
     const [isFiltering, setIsFiltering] = useState(false);
 
@@ -319,6 +322,20 @@ return;
         },
     ];
 
+    function toExportUrl() {
+        const params = new URLSearchParams();
+        if (q) params.set('q', q);
+        if (tipe) params.set('tipe', tipe);
+        if (kelurahan) params.set('kelurahan', kelurahan);
+        if (aktif) params.set('aktif', aktif);
+        const qs = params.toString();
+        return qs ? `/admin/jalur/export?${qs}` : '/admin/jalur/export';
+    }
+
+    const exportCsv = () => {
+        window.location.href = toExportUrl();
+    };
+
     const resetFilters = () => {
         setQ('');
         setTipe('');
@@ -350,6 +367,39 @@ return;
         () => Array.from({ length: 7 }, (_, i) => i),
         [],
     );
+
+    const handleDelete = async (id: number) => {
+        if (!window.confirm('Hapus jalur angkut ini?')) {
+            return;
+        }
+
+        setDeletingId(id);
+
+        try {
+            const res = await fetch(`/admin/jalur-angkut/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN':
+                        (
+                            document.querySelector(
+                                'meta[name="csrf-token"]',
+                            ) as HTMLMetaElement
+                        )?.content ?? '',
+                },
+            });
+
+            if (!res.ok) {
+                throw new Error();
+            }
+
+            router.reload({ only: ['jalur', 'stats'] });
+        } catch {
+            console.error('Gagal menghapus jalur');
+        } finally {
+            setDeletingId(null);
+        }
+    };
 
     const toggleAktif = async (id: number) => {
         setTogglingId(id);
@@ -462,14 +512,25 @@ throw new Error();
                                     </div>
                                 </div>
 
-                                <Button
-                                    variant="ghost"
-                                    className="gap-2"
-                                    onClick={resetFilters}
-                                >
-                                    <RotateCcw className="h-4 w-4" />
-                                    Reset Filter
-                                </Button>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="gap-2"
+                                        onClick={exportCsv}
+                                    >
+                                        <Download className="h-4 w-4" />
+                                        Export CSV
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        className="gap-2"
+                                        onClick={resetFilters}
+                                    >
+                                        <RotateCcw className="h-4 w-4" />
+                                        Reset Filter
+                                    </Button>
+                                </div>
                             </div>
 
                             <div className="flex flex-col gap-3 md:flex-row md:items-end">
@@ -835,6 +896,27 @@ throw new Error();
                                                                     <Power
                                                                         className={`h-4 w-4 ${item.aktif ? 'text-emerald-600' : 'text-muted-foreground'}`}
                                                                     />
+                                                                )}
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                disabled={
+                                                                    deletingId ===
+                                                                    item.id_jalur_angkut
+                                                                }
+                                                                onClick={() =>
+                                                                    handleDelete(
+                                                                        item.id_jalur_angkut,
+                                                                    )
+                                                                }
+                                                                title="Hapus Jalur"
+                                                                className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
+                                                            >
+                                                                {deletingId ===
+                                                                item.id_jalur_angkut ? (
+                                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                                ) : (
+                                                                    <Trash2 className="h-4 w-4" />
                                                                 )}
                                                             </button>
                                                         </div>

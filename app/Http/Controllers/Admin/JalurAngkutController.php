@@ -9,6 +9,67 @@ use Inertia\Inertia;
 
 class JalurAngkutController extends Controller
 {
+    // ── Export CSV ────────────────────────────────────────────
+    public function export(Request $request)
+    {
+        $query = JalurAngkut::query()->orderBy('nama');
+
+        if ($request->filled('q')) {
+            $q = trim((string) $request->q);
+            $query->where(function ($sub) use ($q) {
+                $sub->when(is_numeric($q), fn ($s) => $s->orWhere('id_jalur_angkut', (int) $q))
+                    ->orWhere('nama', 'like', '%'.$q.'%')
+                    ->orWhere('kelurahan', 'like', '%'.$q.'%');
+            });
+        }
+
+        if ($request->filled('tipe')) {
+            $query->where('tipe_kendaraan', $request->tipe);
+        }
+
+        if ($request->filled('kelurahan')) {
+            $query->where('kelurahan', $request->kelurahan);
+        }
+
+        if ($request->filled('aktif')) {
+            $query->where('aktif', $request->aktif === '1');
+        }
+
+        $filename = 'jalur-angkut-'.now()->format('Ymd-His').'.csv';
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+
+        return response()->stream(function () use ($query) {
+            $out = fopen('php://output', 'w');
+            fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            fputcsv($out, ['ID', 'Nama', 'Kelurahan', 'Tipe Kendaraan', 'Warna', 'Titik Koordinat', 'Jadwal', 'Status', 'Diperbarui']);
+
+            $query->chunk(100, function ($jalurList) use ($out) {
+                foreach ($jalurList as $j) {
+                    $titikCount = count($j->getNormalizedCoordinates());
+                    $jadwal = $j->jadwal
+                        ? collect($j->jadwal)->pluck('hari')->join(', ')
+                        : '';
+
+                    fputcsv($out, [
+                        $j->id_jalur_angkut,
+                        $j->nama,
+                        $j->kelurahan ?? '',
+                        $j->tipe_kendaraan,
+                        $j->warna,
+                        $titikCount,
+                        $jadwal,
+                        $j->aktif ? 'Aktif' : 'Nonaktif',
+                        $j->updated_at?->format('d M Y H:i') ?? '',
+                    ]);
+                }
+            });
+        }, 200, $headers);
+    }
+
     // ── Daftar jalur (tabel) ──────────────────────────────────
     public function listIndex(Request $request)
     {
@@ -18,8 +79,8 @@ class JalurAngkutController extends Controller
             $q = trim((string) $request->q);
             $query->where(function ($sub) use ($q) {
                 $sub->when(is_numeric($q), fn ($s) => $s->orWhere('id_jalur_angkut', (int) $q))
-                    ->orWhere('nama', 'like', '%' . $q . '%')
-                    ->orWhere('kelurahan', 'like', '%' . $q . '%');
+                    ->orWhere('nama', 'like', '%'.$q.'%')
+                    ->orWhere('kelurahan', 'like', '%'.$q.'%');
             });
         }
 
@@ -149,7 +210,7 @@ class JalurAngkutController extends Controller
     public function data(Request $request)
     {
         // Wajib ada minimal satu filter
-        if (!$request->filled('tipe') && !$request->filled('kelurahan')) {
+        if (! $request->filled('tipe') && ! $request->filled('kelurahan')) {
             return response()->json([]);
         }
 
@@ -162,7 +223,7 @@ class JalurAngkutController extends Controller
             $query->where('kelurahan', $request->kelurahan);
         }
 
-        $jalur = $query->get()->map(fn($item) => $item->toGeoJson());
+        $jalur = $query->get()->map(fn ($item) => $item->toGeoJson());
 
         return response()->json($jalur);
     }
@@ -185,11 +246,19 @@ class JalurAngkutController extends Controller
         ]);
     }
 
+    // ── Hapus jalur ───────────────────────────────────────────
+    public function destroy($id)
+    {
+        JalurAngkut::where('id_jalur_angkut', $id)->firstOrFail()->delete();
+
+        return response()->json(['message' => 'Jalur berhasil dihapus.']);
+    }
+
     // ── Toggle aktif/nonaktif jalur ───────────────────────────
     public function toggleAktif($id)
     {
         $jalur = JalurAngkut::where('id_jalur_angkut', $id)->firstOrFail();
-        $jalur->update(['aktif' => !$jalur->aktif]);
+        $jalur->update(['aktif' => ! $jalur->aktif]);
 
         return response()->json([
             'message' => 'Status jalur diperbarui.',

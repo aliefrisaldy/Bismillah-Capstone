@@ -54,6 +54,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth.admin')->group(function
     Route::get('peta', [PetaController::class, 'index'])->name('peta.index');
     Route::get('peta/data', [PetaController::class, 'data'])->name('peta.data');
 
+    Route::get('jalur/export', [JalurAngkutController::class, 'export'])->name('jalur.export');
     Route::get('jalur', [JalurAngkutController::class, 'listIndex'])->name('jalur.index');
     Route::get('jalur/{id}/edit', [JalurAngkutController::class, 'edit'])->name('jalur.edit');
     Route::put('jalur/{id}', [JalurAngkutController::class, 'updateDetails'])->name('jalur.update');
@@ -61,10 +62,15 @@ Route::prefix('admin')->name('admin.')->middleware('auth.admin')->group(function
     Route::get('/jalur-angkut', [JalurAngkutController::class, 'index'])->name('jalur-angkut.index');
     Route::get('/jalur-angkut/data', [JalurAngkutController::class, 'data']);
     Route::put('/jalur-angkut/{id}', [JalurAngkutController::class, 'update']);
+    Route::delete('/jalur-angkut/{id}', [JalurAngkutController::class, 'destroy']);
     Route::patch('/jalur-angkut/{id}/toggle', [JalurAngkutController::class, 'toggleAktif']);
     Route::get('/jalur-angkut/kelurahans', [JalurAngkutController::class, 'kelurahans']);
 
+    Route::get('/tps-resmi/export', [TpsResmiController::class, 'export'])->name('tps-resmi.export');
     Route::get('/tps-resmi/data', [TpsResmiController::class, 'data'])->name('tps-resmi.data');
+    Route::get('/tps-resmi/{id}/edit', [TpsResmiController::class, 'edit'])->name('tps-resmi.edit');
+    Route::put('/tps-resmi/{id}', [TpsResmiController::class, 'updateDetails'])->name('tps-resmi.update');
+    Route::get('/tps-resmi/{id}', [TpsResmiController::class, 'show'])->name('tps-resmi.show');
     Route::post('/tps-resmi', [TpsResmiController::class, 'store'])->name('tps-resmi.store');
     Route::delete('/tps-resmi/{id}', [TpsResmiController::class, 'destroy'])->name('tps-resmi.destroy');
     Route::get('/tps-resmi', [TpsResmiController::class, 'index'])->name('tps-resmi.index');

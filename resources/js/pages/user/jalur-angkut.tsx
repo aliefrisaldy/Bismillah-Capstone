@@ -294,6 +294,7 @@ map.removeSource(JALUR_SOURCE);
 
 interface TpsResmi {
     id: number;
+    nama: string | null;
     latitude: number;
     longitude: number;
 }
@@ -362,8 +363,8 @@ function TpsMarkersLayer({
                 titleLabel.textContent = 'TPS Resmi';
                 const titleId = document.createElement('p');
                 titleId.style.cssText =
-                    'color:#fff;font-size:13px;font-weight:800;margin:0;font-family:monospace;';
-                titleId.textContent = `#${String(ts.id).padStart(5, '0')}`;
+                    'color:#fff;font-size:13px;font-weight:800;margin:0;';
+                titleId.textContent = ts.nama ?? `#${String(ts.id).padStart(5, '0')}`;
                 titleWrap.appendChild(titleLabel);
                 titleWrap.appendChild(titleId);
 

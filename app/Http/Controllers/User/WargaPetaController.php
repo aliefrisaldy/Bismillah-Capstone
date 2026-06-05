@@ -29,12 +29,12 @@ class WargaPetaController extends Controller
         }
 
         $laporan = $query->get()->map(fn ($item) => [
-            'id'        => $item->id_laporan,
-            'latitude'  => (float) $item->latitude,
+            'id' => $item->id_laporan,
+            'latitude' => (float) $item->latitude,
             'longitude' => (float) $item->longitude,
-            'alamat'    => $item->alamat,
-            'status'    => $item->status,
-            'tanggal'   => $item->tanggal_laporan?->format('d M Y'),
+            'alamat' => $item->alamat,
+            'status' => $item->status,
+            'tanggal' => $item->tanggal_laporan?->format('d M Y'),
         ]);
 
         return response()->json($laporan);
@@ -48,7 +48,7 @@ class WargaPetaController extends Controller
     public function jalurData(Request $request)
     {
         // Wajib ada minimal satu filter
-        if (!$request->filled('tipe') && !$request->filled('kelurahan')) {
+        if (! $request->filled('tipe') && ! $request->filled('kelurahan')) {
             return response()->json([]);
         }
 
@@ -84,8 +84,9 @@ class WargaPetaController extends Controller
             TpsResmi::where('aktif', true)
                 ->get()
                 ->map(fn ($ts) => [
-                    'id'        => $ts->id_tps_resmi,
-                    'latitude'  => $ts->latitude,
+                    'id' => $ts->id_tps_resmi,
+                    'nama' => $ts->nama,
+                    'latitude' => $ts->latitude,
                     'longitude' => $ts->longitude,
                 ])
         );

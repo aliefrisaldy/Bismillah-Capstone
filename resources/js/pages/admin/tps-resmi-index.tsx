@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     MapPin,
     CheckCircle2,
@@ -8,10 +8,15 @@ import {
     Loader2,
     Power,
     Trash2,
+    Eye,
+    Pencil,
+    Download,
+    Search,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
     Select,
     SelectContent,
@@ -87,6 +92,7 @@ const FadeIn = ({
 
 type TpsItem = {
     id: number;
+    nama: string | null;
     latitude: number;
     longitude: number;
     aktif: boolean;
@@ -111,6 +117,7 @@ type Paginator<T> = {
 };
 
 type Filters = {
+    q?: string | null;
     aktif?: string | null;
 };
 
@@ -131,6 +138,10 @@ const aktifFilterOptions = [
 function buildQuery(filters: Filters) {
     const q: Record<string, string> = {};
 
+    if (filters.q) {
+        q.q = filters.q;
+    }
+
     if (filters.aktif) {
         q.aktif = filters.aktif;
     }
@@ -139,6 +150,7 @@ function buildQuery(filters: Filters) {
 }
 
 export default function TpsResmiIndex({ stats, tps, filters }: Props) {
+    const [q, setQ] = useState(filters?.q ?? '');
     const [aktif, setAktif] = useState(filters?.aktif ?? '');
     const [togglingId, setTogglingId] = useState<number | null>(null);
     const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -147,9 +159,10 @@ export default function TpsResmiIndex({ stats, tps, filters }: Props) {
 
     const activeFilters = useMemo<Filters>(
         () => ({
+            q: q?.trim() ? q.trim() : null,
             aktif: aktif || null,
         }),
-        [aktif],
+        [q, aktif],
     );
 
     useEffect(() => {
@@ -197,7 +210,20 @@ export default function TpsResmiIndex({ stats, tps, filters }: Props) {
         },
     ];
 
+    function toExportUrl() {
+        const params = new URLSearchParams();
+        if (q) params.set('q', q);
+        if (aktif) params.set('aktif', aktif);
+        const qs = params.toString();
+        return qs ? `/admin/tps-resmi/export?${qs}` : '/admin/tps-resmi/export';
+    }
+
+    const exportCsv = () => {
+        window.location.href = toExportUrl();
+    };
+
     const resetFilters = () => {
+        setQ('');
         setAktif('');
     };
 
@@ -370,17 +396,45 @@ export default function TpsResmiIndex({ stats, tps, filters }: Props) {
                                     </div>
                                 </div>
 
-                                <Button
-                                    variant="ghost"
-                                    className="gap-2"
-                                    onClick={resetFilters}
-                                >
-                                    <RotateCcw className="h-4 w-4" />
-                                    Reset Filter
-                                </Button>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="gap-2"
+                                        onClick={exportCsv}
+                                    >
+                                        <Download className="h-4 w-4" />
+                                        Export CSV
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        className="gap-2"
+                                        onClick={resetFilters}
+                                    >
+                                        <RotateCcw className="h-4 w-4" />
+                                        Reset Filter
+                                    </Button>
+                                </div>
                             </div>
 
                             <div className="flex flex-col gap-3 md:flex-row md:items-end">
+                                <div className="w-full md:w-[220px]">
+                                    <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                                        Pencarian
+                                    </label>
+                                    <div className="relative">
+                                        <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                        <Input
+                                            value={q}
+                                            onChange={(e) =>
+                                                setQ(e.target.value)
+                                            }
+                                            placeholder="Cari ID atau nama TPS…"
+                                            className="h-11 pl-9"
+                                        />
+                                    </div>
+                                </div>
+
                                 <div className="w-full md:w-[220px]">
                                     <label className="mb-1 block text-xs font-medium text-muted-foreground">
                                         Status
@@ -433,6 +487,9 @@ export default function TpsResmiIndex({ stats, tps, filters }: Props) {
                                             ID
                                         </th>
                                         <th className="pb-3 text-center font-medium">
+                                            Nama
+                                        </th>
+                                        <th className="pb-3 text-center font-medium">
                                             Latitude
                                         </th>
                                         <th className="pb-3 text-center font-medium">
@@ -457,6 +514,9 @@ export default function TpsResmiIndex({ stats, tps, filters }: Props) {
                                         >
                                             <td className="py-3 text-center">
                                                 <div className="mx-auto h-4 w-16 rounded bg-muted/70" />
+                                            </td>
+                                            <td className="py-3 text-center">
+                                                <div className="mx-auto h-4 w-40 rounded bg-muted/70" />
                                             </td>
                                             <td className="py-3 text-center">
                                                 <div className="mx-auto h-4 w-28 rounded bg-muted/70" />
@@ -497,11 +557,14 @@ export default function TpsResmiIndex({ stats, tps, filters }: Props) {
                                 <table className="w-full text-sm">
                                     <thead>
                                         <tr className="border-b border-border text-xs text-muted-foreground">
-                                            <th className="pb-3 text-center font-medium">
-                                                ID
-                                            </th>
-                                            <th className="pb-3 text-center font-medium">
-                                                Latitude
+                                        <th className="pb-3 text-center font-medium">
+                                            ID
+                                        </th>
+                                        <th className="pb-3 text-center font-medium">
+                                            Nama
+                                        </th>
+                                        <th className="pb-3 text-center font-medium">
+                                            Latitude
                                             </th>
                                             <th className="pb-3 text-center font-medium">
                                                 Longitude
@@ -530,6 +593,9 @@ export default function TpsResmiIndex({ stats, tps, filters }: Props) {
                                                         '0',
                                                     )}
                                                 </td>
+                                                <td className="py-3 text-center text-xs text-muted-foreground max-w-[200px] truncate">
+                                                    {item.nama ?? '—'}
+                                                </td>
                                                 <td className="py-3 text-center font-mono text-xs text-muted-foreground">
                                                     {item.latitude.toFixed(6)}
                                                 </td>
@@ -554,6 +620,20 @@ export default function TpsResmiIndex({ stats, tps, filters }: Props) {
                                                 </td>
                                                 <td className="py-3 text-center">
                                                     <div className="inline-flex items-center gap-0.5">
+                                                        <Link
+                                                            href={`/admin/tps-resmi/${item.id}`}
+                                                            title="Detail TPS"
+                                                            className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                                        >
+                                                            <Eye className="h-4 w-4" />
+                                                        </Link>
+                                                        <Link
+                                                            href={`/admin/tps-resmi/${item.id}/edit`}
+                                                            title="Edit TPS"
+                                                            className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                                        >
+                                                            <Pencil className="h-4 w-4" />
+                                                        </Link>
                                                         <button
                                                             type="button"
                                                             disabled={
