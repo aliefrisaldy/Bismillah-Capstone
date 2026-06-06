@@ -499,12 +499,12 @@ export default function Dashboard({
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                     {/* Jalur by Tipe */}
-                    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                    <div className="flex flex-col rounded-2xl border border-border bg-card p-5 shadow-sm">
                         <div className="mb-1 flex items-center justify-between">
                             <h3 className="text-sm font-extrabold text-foreground">Jalur Pengangkutan Sampah</h3>
                             <span className="text-[11px] text-muted-foreground">{totalJalur} total jalur</span>
                         </div>
-                        <div className="h-48">
+                        <div className="min-h-48 flex-1">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart
                                     data={jalurBarData}
@@ -543,7 +543,7 @@ export default function Dashboard({
                     </div>
 
                     {/* Laporan per Kelurahan */}
-                    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                    <div className="flex flex-col rounded-2xl border border-border bg-card p-5 shadow-sm">
                         <div className="mb-4 flex items-center justify-between">
                             <h3 className="text-sm font-extrabold text-foreground">
                                 Laporan Setiap Kelurahan
@@ -574,7 +574,7 @@ export default function Dashboard({
                             )}
                         </div>
                         {selectedKecamatan && kelurahanChartData.length > 0 ? (
-                            <div className="h-56">
+                            <div className="min-h-56 flex-1">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart
                                         data={kelurahanChartData}
@@ -626,7 +626,7 @@ export default function Dashboard({
                                 </ResponsiveContainer>
                             </div>
                         ) : (
-                            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground/50">
+                            <div className="flex flex-1 flex-col items-center justify-center py-10 text-muted-foreground/50">
                                 <MapPin className="mb-2 h-8 w-8" />
                                 <p className="text-sm">
                                     {selectedKecamatan

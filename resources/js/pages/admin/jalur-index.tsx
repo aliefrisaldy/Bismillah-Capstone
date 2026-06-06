@@ -17,7 +17,9 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState  } from 'react';
 import type {ReactNode} from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -239,6 +241,7 @@ export default function AdminJalurIndex({
     const [aktif, setAktif] = useState(filters?.aktif ?? '');
     const [togglingId, setTogglingId] = useState<number | null>(null);
     const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [pendingDelete, setPendingDelete] = useState<number | null>(null);
     const lastSerializedRef = useRef<string>('');
     const [isFiltering, setIsFiltering] = useState(false);
 
@@ -368,15 +371,20 @@ return;
         [],
     );
 
-    const handleDelete = async (id: number) => {
-        if (!window.confirm('Hapus jalur angkut ini?')) {
+    const handleDelete = (id: number) => {
+        setPendingDelete(id);
+    };
+
+    const executeDelete = async () => {
+        if (pendingDelete === null) {
             return;
         }
 
-        setDeletingId(id);
+        setDeletingId(pendingDelete);
+        setPendingDelete(null);
 
         try {
-            const res = await fetch(`/admin/jalur-angkut/${id}`, {
+            const res = await fetch(`/admin/jalur-angkut/${pendingDelete}`, {
                 method: 'DELETE',
                 headers: {
                     Accept: 'application/json',
@@ -419,8 +427,13 @@ return;
             });
 
             if (!res.ok) {
-throw new Error();
-}
+                throw new Error();
+            }
+
+            const data = (await res.json()) as { aktif: boolean };
+            const status = data.aktif ? 'Aktif' : 'Nonaktif';
+
+            toast.success(`Status jalur diperbarui menjadi ${status}`);
 
             router.reload({ only: ['jalur', 'stats'] });
         } catch {
@@ -962,6 +975,19 @@ throw new Error();
                     )}
                 </div>
             </div>
+
+            <ConfirmDialog
+                open={pendingDelete !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setPendingDelete(null);
+                    }
+                }}
+                onConfirm={executeDelete}
+                title="Hapus Jalur Angkut"
+                description="Apakah Anda yakin ingin menghapus jalur angkut ini? Tindakan ini tidak dapat dibatalkan."
+                loading={deletingId !== null}
+            />
         </>
     );
 }

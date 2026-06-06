@@ -88,9 +88,10 @@ class LaporanController extends Controller
 
         Cache::forget('dashboard.stats.v2');
 
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Laporan berhasil dikirim.']);
+
         return redirect()->route('user.laporan.index')
-            ->withCookie(cookie()->make('pelapor_id', $pelaporId, 60 * 24 * 365))
-            ->with('success', 'Laporan berhasil dikirim.');
+            ->withCookie(cookie()->make('pelapor_id', $pelaporId, 60 * 24 * 365));
     }
 
     public function show(Request $request, $id)

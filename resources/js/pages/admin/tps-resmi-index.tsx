@@ -15,7 +15,9 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -154,6 +156,7 @@ export default function TpsResmiIndex({ stats, tps, filters }: Props) {
     const [aktif, setAktif] = useState(filters?.aktif ?? '');
     const [togglingId, setTogglingId] = useState<number | null>(null);
     const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [pendingDelete, setPendingDelete] = useState<number | null>(null);
     const lastSerializedRef = useRef<string>('');
     const [isFiltering, setIsFiltering] = useState(false);
 
@@ -273,6 +276,11 @@ export default function TpsResmiIndex({ stats, tps, filters }: Props) {
                 throw new Error();
             }
 
+            const data = (await res.json()) as { aktif: boolean };
+            const status = data.aktif ? 'Aktif' : 'Nonaktif';
+
+            toast.success(`Status TPS diperbarui menjadi ${status}`);
+
             router.reload({ only: ['tps', 'stats'] });
         } catch {
             console.error('Gagal mengubah status TPS');
@@ -281,15 +289,20 @@ export default function TpsResmiIndex({ stats, tps, filters }: Props) {
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!window.confirm('Hapus titik TPS ini?')) {
+    const handleDelete = (id: number) => {
+        setPendingDelete(id);
+    };
+
+    const executeDelete = async () => {
+        if (pendingDelete === null) {
             return;
         }
 
-        setDeletingId(id);
+        setDeletingId(pendingDelete);
+        setPendingDelete(null);
 
         try {
-            const res = await fetch(`/admin/tps-resmi/${id}`, {
+            const res = await fetch(`/admin/tps-resmi/${pendingDelete}`, {
                 method: 'DELETE',
                 headers: {
                     Accept: 'application/json',
@@ -724,6 +737,19 @@ export default function TpsResmiIndex({ stats, tps, filters }: Props) {
                     )}
                 </div>
             </div>
+
+            <ConfirmDialog
+                open={pendingDelete !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setPendingDelete(null);
+                    }
+                }}
+                onConfirm={executeDelete}
+                title="Hapus TPS Resmi"
+                description="Apakah Anda yakin ingin menghapus titik TPS ini? Tindakan ini tidak dapat dibatalkan."
+                loading={deletingId !== null}
+            />
         </>
     );
 }

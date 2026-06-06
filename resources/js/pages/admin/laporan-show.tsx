@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -370,6 +371,10 @@ fd.append('catatan', catatan.trim());
                 setCatatan('');
                 setFotoBuktiFiles([]);
                 setFotoInputKey((k) => k + 1);
+
+                toast.success(
+                    `Status laporan diubah menjadi ${statusMeta[nextStatus].label}`,
+                );
             },
         });
     };
