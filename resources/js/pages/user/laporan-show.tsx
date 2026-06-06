@@ -133,7 +133,7 @@ return Number.isFinite(input) ? input : null;
 export default function LaporanShow({ laporan, riwayat }: Props) {
     const displayId =
         laporan.kode_laporan ??
-        `PLC-${String(laporan.id_laporan).padStart(4, '0')}`;
+        `REP-${String(laporan.id_laporan).padStart(4, '0')}`;
     const lat = toNumberOrNull(laporan.latitude ?? null);
     const lng = toNumberOrNull(laporan.longitude ?? null);
     const hasCoords = lat !== null && lng !== null;

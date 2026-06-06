@@ -122,7 +122,7 @@ clearTimeout(timeoutRef.current);
             {isOpen && (
                 <>
                     <div className="fixed inset-0 z-30" onClick={() => setIsOpen(false)} />
-                    <div className="absolute right-0 z-40 mt-3 w-80 origin-top-right rounded-2xl border border-border bg-card shadow-xl shadow-black/5">
+                    <div className="fixed left-4 right-4 z-40 mt-3 origin-top-right rounded-2xl border border-border bg-card shadow-xl shadow-black/5 sm:absolute sm:left-auto sm:right-0 sm:w-80">
                         <div className="border-b border-border px-5 py-3">
                             <p className="text-sm font-bold text-foreground">Notifikasi Laporan</p>
                             <p className="text-xs text-muted-foreground">
