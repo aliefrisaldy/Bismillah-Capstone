@@ -586,14 +586,12 @@ fd.append('catatan', catatan.trim());
                                         <FadeIn delay={560} direction="up">
                                             <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-background">
                                                 <div className="relative z-0 h-[240px] w-full sm:h-[280px]">
-                                                    <a
+                                                    <Link
+                                                        href={`/admin/peta?laporan_id=${laporan.id_laporan}`}
                                                         className="absolute top-3 right-3 z-[1] rounded-full border border-border bg-background/90 px-3 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm backdrop-blur hover:underline dark:text-emerald-300"
-                                                        href={`https://www.google.com/maps?q=${lat},${lng}`}
-                                                        target="_blank"
-                                                        rel="noreferrer"
                                                     >
-                                                        Buka di Google Maps
-                                                    </a>
+                                                        Buka di Peta
+                                                    </Link>
                                                     <Map
                                                         center={[
                                                             lng,

@@ -1200,6 +1200,8 @@ export default function Peta() {
     const [mapReady, setMapReady] = useState(false);
     const popupRef = useRef<maplibregl.Popup | null>(null);
     const popupRootRef = useRef<Root | null>(null);
+    const focusDoneRef = useRef(false);
+    const [focusId, setFocusId] = useState<number | null>(null);
 
     // ── Jalur angkut ──
     const [jalurList, setJalurList] = useState<JalurFeature[]>([]);
@@ -1265,6 +1267,16 @@ export default function Peta() {
         });
 
         return () => observer.disconnect();
+    }, []);
+
+    // ── Focus on laporan from URL ──
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('laporan_id');
+
+        if (id) {
+            setFocusId(Number(id));
+        }
     }, []);
 
     // ── Fetch laporan ──
@@ -1596,6 +1608,34 @@ export default function Peta() {
         filteredLaporan,
         openLaporanPopup,
     );
+
+    // ── Fly to + popup laporan from URL ──
+    useEffect(() => {
+        if (!mapReady || !focusId || focusDoneRef.current) {
+            return;
+        }
+
+        const target = laporan.find((l) => l.id === focusId);
+
+        if (!target) {
+            return;
+        }
+
+        focusDoneRef.current = true;
+        const map = mapRef.current;
+
+        if (!map) {
+            return;
+        }
+
+        map.flyTo({ center: [target.longitude, target.latitude], zoom: 16, duration: 1500 });
+
+        const onMoveEnd = () => {
+            map.off('moveend', onMoveEnd);
+            openLaporanPopup(target);
+        };
+        map.on('moveend', onMoveEnd);
+    }, [mapReady, laporan, focusId, openLaporanPopup]);
 
     const jalurFitKey = `${filterTipe}|${effectiveKelurahan}|${jalurList.length}`;
 

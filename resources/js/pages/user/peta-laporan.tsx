@@ -476,6 +476,8 @@ export default function PetaLaporan() {
     const [mapInstance, setMapInstance] = useState<maplibregl.Map | null>(null);
     const popupRef = useRef<maplibregl.Popup | null>(null);
     const popupRootRef = useRef<Root | null>(null);
+    const focusDoneRef = useRef(false);
+    const [focusId, setFocusId] = useState<number | null>(null);
 
     // ── Theme ──
     const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -501,6 +503,16 @@ export default function PetaLaporan() {
         });
 
         return () => observer.disconnect();
+    }, []);
+
+    // ── Focus on laporan from URL ──
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('laporan_id');
+
+        if (id) {
+            setFocusId(Number(id));
+        }
     }, []);
 
     // ── Fetch laporan ──
@@ -689,6 +701,29 @@ export default function PetaLaporan() {
         filteredLaporan,
         openLaporanPopup,
     );
+
+    // ── Fly to + popup laporan from URL ──
+    useEffect(() => {
+        if (!mapInstance || !focusId || focusDoneRef.current) {
+            return;
+        }
+
+        const target = laporan.find((l) => l.id === focusId);
+
+        if (!target) {
+            return;
+        }
+
+        focusDoneRef.current = true;
+
+        mapInstance.flyTo({ center: [target.longitude, target.latitude], zoom: 16, duration: 1500 });
+
+        const onMoveEnd = () => {
+            mapInstance.off('moveend', onMoveEnd);
+            openLaporanPopup(target);
+        };
+        mapInstance.on('moveend', onMoveEnd);
+    }, [mapInstance, laporan, focusId, openLaporanPopup]);
 
     return (
         <>
