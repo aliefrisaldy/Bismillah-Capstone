@@ -130,8 +130,6 @@ export default function UserLayout({ children }: { children: ReactNode }) {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <NotificationDropdown laporanList={laporan_summary} />
-
                         <button
                             type="button"
                             onClick={toggleTheme}
@@ -144,6 +142,8 @@ export default function UserLayout({ children }: { children: ReactNode }) {
                                 <Moon className="h-5 w-5" />
                             )}
                         </button>
+
+                        <NotificationDropdown laporanList={laporan_summary} />
 
                         <button
                             type="button"
