@@ -3,7 +3,6 @@ import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import {
     ArrowLeft,
-    Printer,
     MapPin,
     CalendarDays,
     Crosshair,
@@ -220,7 +219,7 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                 </FadeIn>
 
                 {/* Actions */}
-                <FadeIn delay={160} direction="up" className="print:hidden">
+                <FadeIn delay={160} direction="up">
                     <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
                         <Link href="/user/laporan" className="sm:mr-auto">
                             <Button
@@ -231,13 +230,6 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                                 Kembali ke Daftar
                             </Button>
                         </Link>
-                        <Button
-                            onClick={() => window.print()}
-                            className="w-full rounded-xl bg-orange-500 text-white hover:bg-orange-600 sm:w-auto"
-                        >
-                            <Printer className="mr-2 h-4 w-4" />
-                            Cetak Laporan
-                        </Button>
                     </div>
                 </FadeIn>
 

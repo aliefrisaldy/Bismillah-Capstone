@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Moon, Sun, User } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import NotificationDropdown from '@/components/notification-dropdown';
@@ -144,10 +144,6 @@ export default function UserLayout({ children }: { children: ReactNode }) {
                                 <Moon className="h-5 w-5" />
                             )}
                         </button>
-
-                        <div className="flex size-10 items-center justify-center rounded-full border border-border bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-                            <User className="h-5 w-5" />
-                        </div>
 
                         <button
                             type="button"
