@@ -1,13 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import type { ReactNode} from 'react';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import {
     ArrowLeft,
     Loader2,
@@ -20,11 +13,12 @@ import {
     ChevronRight,
     CheckCircle2,
 } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Map, MapMarker } from '@/components/ui/map';
 import {
     Select,
     SelectContent,
@@ -33,13 +27,6 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconUrl: markerIcon,
-    iconRetinaUrl: markerIcon2x,
-    shadowUrl: markerShadow,
-});
 
 const FadeIn = ({
     children,
@@ -105,19 +92,6 @@ observer.unobserve(currentRef);
         </div>
     );
 };
-
-function ChangeView({
-    center,
-    zoom,
-}: {
-    center: [number, number];
-    zoom: number;
-}) {
-    const map = useMap();
-    map.setView(center, zoom);
-
-    return null;
-}
 
 type LaporanStatus =
     | 'menunggu'
@@ -326,6 +300,31 @@ return 'ditolak';
     );
     const [activeImage, setActiveImage] = useState<string | null>(null);
     const imagesKey = images.join('|');
+
+    const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+        if (typeof document === 'undefined') {
+            return 'light';
+        }
+
+        return document.documentElement.classList.contains('dark')
+            ? 'dark'
+            : 'light';
+    });
+    useEffect(() => {
+        const observer = new MutationObserver(() => {
+            setTheme(
+                document.documentElement.classList.contains('dark')
+                    ? 'dark'
+                    : 'light',
+            );
+        });
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['class'],
+        });
+
+        return () => observer.disconnect();
+    }, []);
 
     useEffect(() => {
         setSelectedImage(images[0] ?? null);
@@ -595,28 +594,24 @@ fd.append('catatan', catatan.trim());
                                                     >
                                                         Buka di Google Maps
                                                     </a>
-                                                    <MapContainer
-                                                        center={[lat, lng]}
+                                                    <Map
+                                                        center={[
+                                                            lng,
+                                                            lat,
+                                                        ]}
                                                         zoom={16}
-                                                        scrollWheelZoom={false}
-                                                        className="relative z-0 h-full w-full"
-                                                        style={{ zIndex: 0 }}
+                                                        className="z-0"
+                                                        theme={theme}
                                                     >
-                                                        <TileLayer
-                                                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                                                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                                        />
-                                                        <Marker
-                                                            position={[
-                                                                lat,
-                                                                lng,
-                                                            ]}
-                                                        />
-                                                        <ChangeView
-                                                            center={[lat, lng]}
-                                                            zoom={16}
-                                                        />
-                                                    </MapContainer>
+                                                        <MapMarker
+                                                            longitude={lng}
+                                                            latitude={lat}
+                                                        >
+                                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500 shadow-lg">
+                                                                <MapPin className="h-5 w-5 text-white" />
+                                                            </div>
+                                                        </MapMarker>
+                                                    </Map>
                                                 </div>
                                             </div>
                                         </FadeIn>

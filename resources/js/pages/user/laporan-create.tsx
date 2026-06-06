@@ -30,6 +30,31 @@ export default function LaporanCreate() {
     const fileRef = useRef<HTMLInputElement>(null);
     const cameraRef = useRef<HTMLInputElement>(null);
 
+    const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+        if (typeof document === 'undefined') {
+            return 'light';
+        }
+
+        return document.documentElement.classList.contains('dark')
+            ? 'dark'
+            : 'light';
+    });
+    useEffect(() => {
+        const observer = new MutationObserver(() => {
+            setTheme(
+                document.documentElement.classList.contains('dark')
+                    ? 'dark'
+                    : 'light',
+            );
+        });
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['class'],
+        });
+
+        return () => observer.disconnect();
+    }, []);
+
     useEffect(() => {
         const next = files.map((f) => URL.createObjectURL(f));
         setPreviews(next);
@@ -364,6 +389,7 @@ return;
                                                 ]}
                                                 zoom={16}
                                                 className="z-0"
+                                                theme={theme}
                                             >
                                                 <MapMarker
                                                     longitude={Number(longitude)}
