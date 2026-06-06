@@ -501,7 +501,7 @@ export default function Dashboard({
                     {/* Jalur by Tipe */}
                     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
                         <div className="mb-1 flex items-center justify-between">
-                            <h3 className="text-sm font-extrabold text-foreground">Armada Pengangkutan Sampah</h3>
+                            <h3 className="text-sm font-extrabold text-foreground">Jalur Pengangkutan Sampah</h3>
                             <span className="text-[11px] text-muted-foreground">{totalJalur} total jalur</span>
                         </div>
                         <div className="h-48">
