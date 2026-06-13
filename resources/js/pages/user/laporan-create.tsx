@@ -127,6 +127,11 @@ return;
                 );
                 setLocating(false);
             },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0,
+            },
         );
     };
 
@@ -394,6 +399,33 @@ return;
                                                 <MapMarker
                                                     longitude={Number(longitude)}
                                                     latitude={Number(latitude)}
+                                                    draggable={true}
+                                                    onDragEnd={(lngLat) => {
+                                                        setLatitude(
+                                                            String(lngLat.lat),
+                                                        );
+                                                        setLongitude(
+                                                            String(lngLat.lng),
+                                                        );
+
+                                                        fetch(
+                                                            `https://nominatim.openstreetmap.org/reverse?lat=${lngLat.lat}&lon=${lngLat.lng}&format=json`,
+                                                        )
+                                                            .then((r) =>
+                                                                r.json(),
+                                                            )
+                                                            .then((data) =>
+                                                                setAlamat(
+                                                                    data.display_name ??
+                                                                        '',
+                                                                ),
+                                                            )
+                                                            .catch(() =>
+                                                                setAlamat(
+                                                                    `${lngLat.lat}, ${lngLat.lng}`,
+                                                                ),
+                                                            );
+                                                    }}
                                                 >
                                                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500 shadow-lg">
                                                         <MapPin className="h-5 w-5 text-white" />
@@ -430,6 +462,10 @@ return;
                                             <p className="text-[11px] text-muted-foreground">
                                                 *Pastikan GPS Anda aktif untuk
                                                 akurasi lokasi pelaporan.
+                                            </p>
+                                            <p className="text-[11px] text-muted-foreground">
+                                                *Geser marker jika posisi kurang
+                                                tepat.
                                             </p>
                                         </div>
                                     </div>

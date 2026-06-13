@@ -543,9 +543,18 @@ fd.append('catatan', catatan.trim());
                                                 icon: User,
                                                 iconClass:
                                                     'bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300',
-                                                value:
-                                                    laporan.pelapor?.nama ??
-                                                    '-',
+                                                value: (
+                                                    <>
+                                                        {laporan.pelapor
+                                                            ?.nama ?? '-'}
+                                                        <br />
+                                                        <span className="text-xs font-bold text-muted-foreground">
+                                                            {laporan.pelapor
+                                                                ?.no_telpon ??
+                                                                '-'}
+                                                        </span>
+                                                    </>
+                                                ),
                                                 valueClass:
                                                     'text-sm font-semibold text-foreground',
                                             },

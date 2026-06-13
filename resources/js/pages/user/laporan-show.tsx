@@ -340,9 +340,17 @@ export default function LaporanShow({ laporan, riwayat }: Props) {
                                                 icon: User,
                                                 iconClass:
                                                     'bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300',
-                                                value:
-                                                    laporan.nama_pelapor ??
-                                                    'Masyarakat',
+                                                value: (
+                                                    <>
+                                                        {laporan.nama_pelapor ??
+                                                            'Masyarakat'}
+                                                        <br />
+                                                        <span className="text-xs font-bold text-muted-foreground">
+                                                            {laporan.no_telpon_pelapor ??
+                                                                '-'}
+                                                        </span>
+                                                    </>
+                                                ),
                                                 valueClass:
                                                     'text-sm font-semibold text-foreground',
                                             },
